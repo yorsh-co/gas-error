@@ -14,7 +14,7 @@ const errorHandler = (
     logger = console,
     method = 'unknown',
     path = 'unknown',
-    session = Session.getActiveUser()?.getEmail() || 'unknown',
+    sessionId = Session.getActiveUser()?.getEmail() || 'unknown',
     rethrow = true,
   } = options;
 
@@ -29,7 +29,7 @@ const errorHandler = (
     statusCode,
     code,
     message: err.message,
-    session,
+    sessionId,
   };
 
   if (isGasError && statusCode < 500) {

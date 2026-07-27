@@ -3,7 +3,7 @@ interface GasErrorHandlerOptions {
   logger?: GasLogger | typeof console;
   method?: string;
   path?: string;
-  session?: string;
+  sessionId?: string;
 
   /** Set to false to return the safe error payload. Defaults to true. */
   rethrow?: boolean;
@@ -15,7 +15,7 @@ interface GasErrorPayload {
   statusCode: number;
   code: GasErrorCode;
   message: string;
-  session: string;
+  sessionId: string;
 }
 
 interface GasErrorSafePayload {
