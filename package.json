@@ -1,0 +1,11 @@
+{
+  "name": "gas-error",
+  "version": "0.0.0",
+  "description": "Operational error classes and a centralized JSON error handler for Google Apps Script.",
+  "license": "MIT",
+  "author": "Joshua Porter",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yorsh-co/gas-error.git"
+  }
+}
