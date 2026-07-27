@@ -192,7 +192,7 @@ try {
 }
 ```
 
-`errorHandler` always throws. For a `GasError` with `statusCode < 500`, it logs `'Request error'` at `warn` with `{ method, path, statusCode, code, message, session }`. For anything else — including non-operational bugs — it logs `'Unexpected error'` at `error` with the same payload plus the full `stack`, and the client only ever sees a generic 500 with no internal detail. Either way, the thrown error's `.message` is a JSON string: `{ ok: false, error, status, code, details? }`.
+`errorHandler` throws by default. Set the `rethrow` option to `false` to set the handler to return the cleaned error body instead of throwing. For a `GasError` with `statusCode < 500`, it logs `'Request error'` at `warn` with `{ method, path, statusCode, code, message, session }`. For anything else — including non-operational bugs — it logs `'Unexpected error'` at `error` with the same payload plus the full `stack`, and the client only ever sees a generic 500 with no internal detail. Either way, the thrown error's `.message` is a JSON string: `{ ok: false, error, status, code, details? }`.
 
 > **Note:**
 > `method`, `path`, and `session` all default to `'unknown'` if not provided (`session` first tries `Session.getActiveUser()?.getEmail()`).
