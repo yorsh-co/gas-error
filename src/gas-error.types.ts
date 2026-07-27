@@ -4,6 +4,9 @@ interface GasErrorHandlerOptions {
   method?: string;
   path?: string;
   session?: string;
+
+  /** Set to false to return the safe error payload. Defaults to true. */
+  rethrow?: boolean;
 }
 
 interface GasErrorPayload {
@@ -13,6 +16,14 @@ interface GasErrorPayload {
   code: GasErrorCode;
   message: string;
   session: string;
+}
+
+interface GasErrorSafePayload {
+  ok: boolean;
+  error: string;
+  status: number;
+  code: GasErrorCode;
+  details?: unknown;
 }
 
 type GasErrorCode =

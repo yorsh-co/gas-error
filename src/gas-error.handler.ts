@@ -9,12 +9,13 @@
 const errorHandler = (
   err: Error | GasError,
   options: GasErrorHandlerOptions = {},
-): never => {
+): GasErrorSafePayload => {
   const {
     logger = console,
     method = 'unknown',
     path = 'unknown',
     session = Session.getActiveUser()?.getEmail() || 'unknown',
+    rethrow = true,
   } = options;
 
   const isGasError = err instanceof GasError;
@@ -37,13 +38,17 @@ const errorHandler = (
     logger.error('Unexpected error', { ...logPayload, stack: err.stack });
   }
 
-  throw new Error(
-    JSON.stringify({
-      ok: false,
-      error: isGasError ? err.message : 'Internal server error',
-      status: statusCode,
-      code,
-      ...(isGasError && err.details ? { details: err.details } : {}),
-    }),
-  );
+  const safePayload = {
+    ok: false,
+    error: isGasError ? err.message : 'Internal server error',
+    status: statusCode,
+    code,
+    ...(isGasError && err.details ? { details: err.details } : {}),
+  };
+
+  if (rethrow) {
+    throw new Error(JSON.stringify(safePayload));
+  } else {
+    return safePayload;
+  }
 };
