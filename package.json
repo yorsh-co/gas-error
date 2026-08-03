@@ -1,6 +1,6 @@
 {
   "name": "gas-error",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "description": "A centralized JSON error handler for Google Apps Script with Error classes for expected failures.",
   "repository": {
