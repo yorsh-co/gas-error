@@ -23,37 +23,37 @@ class GasError extends Error {
   }
 }
 
-class ValidationError extends GasError {
+class GasValidationError extends GasError {
   constructor(message = 'Invalid request', details?: string) {
     super(message, { statusCode: 400, code: 'VALIDATION_ERROR', details });
   }
 }
 
-class NotFoundError extends GasError {
+class GasNotFoundError extends GasError {
   constructor(message = 'Resource not found') {
     super(message, { statusCode: 404, code: 'NOT_FOUND' });
   }
 }
 
-class UnauthorizedError extends GasError {
+class GasUnauthorizedError extends GasError {
   constructor(message = 'Unauthorized') {
     super(message, { statusCode: 401, code: 'UNAUTHORIZED' });
   }
 }
 
-class ForbiddenError extends GasError {
+class GasForbiddenError extends GasError {
   constructor(message = 'Forbidden') {
     super(message, { statusCode: 403, code: 'FORBIDDEN' });
   }
 }
 
-class ConflictError extends GasError {
+class GasConflictError extends GasError {
   constructor(message = 'Conflict') {
     super(message, { statusCode: 409, code: 'CONFLICT' });
   }
 }
 
-class RateLimitError extends GasError {
+class GasRateLimitError extends GasError {
   constructor(message = 'Too many requests', retryAfterSeconds?: number) {
     super(message, {
       statusCode: 429,
@@ -63,7 +63,7 @@ class RateLimitError extends GasError {
   }
 }
 
-class CaptchaRequiredError extends GasError {
+class GasCaptchaRequiredError extends GasError {
   constructor(message = 'Captcha verification required', details?: unknown) {
     super(message, { statusCode: 400, code: 'CAPTCHA_REQUIRED', details });
   }
