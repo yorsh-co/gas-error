@@ -9,14 +9,17 @@ interface GasErrorHandlerOptions {
   rethrow?: boolean;
 }
 
-interface GasErrorPayload {
+/**
+ * Shape of the `meta` object `GasError.handle` passes to the logger.
+ */
+type GasErrorLogPayload = {
   method: string;
   path: string;
   statusCode: number;
   code: GasErrorCode;
   message: string;
   sessionId: string;
-}
+};
 
 interface GasErrorSafePayload {
   ok: boolean;
