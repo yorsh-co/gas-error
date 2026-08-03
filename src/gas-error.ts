@@ -49,7 +49,7 @@ class GasError extends Error {
 
     const code: GasErrorCode = isGasError ? err.code : 'INTERNAL_ERROR';
 
-    const logPayload = {
+    const logPayload: GasErrorLogPayload = {
       method,
       path,
       statusCode,
@@ -64,7 +64,7 @@ class GasError extends Error {
       logger.error('Unexpected error', { ...logPayload, stack: err.stack });
     }
 
-    const safePayload = {
+    const safePayload: GasErrorSafePayload = {
       ok: false,
       error: isGasError ? err.message : 'Internal server error',
       status: statusCode,
