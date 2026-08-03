@@ -12,7 +12,11 @@ interface GasErrorHandlerOptions {
   /** Route or entry point being handled. Defaults to `'unknown'`. */
   path?: string;
 
-  /** Who the request belongs to. Defaults to the active user's email. */
+  /**
+   * Who the request belongs to. Falls back to the active user's email,
+   * which requires the `https://www.googleapis.com/auth/userinfo.email`
+   * scope — without it the value logs as `'unknown'` or `'disabled'`.
+   */
   sessionId?: string;
 
   /** Set to false to return the safe error payload. Defaults to true. */
