@@ -2,10 +2,10 @@
 
 [![Built with Google Apps Script](https://img.shields.io/badge/Built%20with-Google%20Apps%20Script-4285F4?logo=google&logoColor=white)](https://developers.google.com/apps-script)
 
-## Operational error classes and a centralized JSON error handler for Google Apps Script.
+## A centralized JSON error handler for Google Apps Script with Error classes for expected failures.
 
 > [!NOTE]
-> The goal of this project is to give Apps Script web apps a single place to define expected ("operational") errors — validation failures, missing resources, auth problems — and a single handler that logs and serializes them consistently, without leaking internal detail when something unexpected goes wrong.
+> The goal of this project is to give Apps Script web apps a single place to define the failures you expect — validation problems, missing resources, auth — and a single handler that logs and serializes them consistently, without leaking internal detail when something unexpected goes wrong.
 
 `gas-error` provides a `GasError` base class plus seven common subclasses (`GasValidationError`, `GasNotFoundError`, `GasUnauthorizedError`, `GasForbiddenError`, `GasConflictError`, `GasRateLimitError`, `GasCaptchaRequiredError`), and a `GasError.handle(err, options)` static that logs the error and throws a JSON-serializable payload ready to return from your web app's entry point.
 
@@ -201,7 +201,7 @@ function doGet(e) {
 
 ## Basic Usage
 
-### Throw an operational error
+### Throw an expected (operational) error
 
 ```js
 throw new GasValidationError('Invalid request body', { field: 'email' });
@@ -236,7 +236,7 @@ try {
 }
 ```
 
-`GasError.handle` throws by default. Set the `rethrow` option to `false` to set the handler to return the cleaned error body instead of throwing. For a `GasError` with `statusCode < 500`, it logs `'Request error'` at `warn` with `{ method, path, statusCode, code, message, sessionId }`. For anything else — including non-operational bugs — it logs `'Unexpected error'` at `error` with the same payload plus the full `stack`, and the client only ever sees a generic 500 with no internal detail. Either way, the thrown error's `.message` is a JSON string: `{ ok: false, error, status, code, details? }`.
+`GasError.handle` throws by default. Set the `rethrow` option to `false` to set the handler to return the cleaned error body instead of throwing. For a `GasError` with `statusCode < 500`, it logs `'Request error'` at `warn` with `{ method, path, statusCode, code, message, sessionId }`. For anything else — including unexpected bugs — it logs `'Unexpected error'` at `error` with the same payload plus the full `stack`, and the client only ever sees a generic 500 with no internal detail. Either way, the thrown error's `.message` is a JSON string: `{ ok: false, error, status, code, details? }`.
 
 > [!NOTE]
 > `method` and `path` default to `'unknown'` if not provided. `sessionId` first tries `Session.getActiveUser()?.getEmail()`, falling back to `'unknown'` if the address isn't available, or `'disabled'` if the [`userinfo.email` scope](#oauth-scope) is missing.
