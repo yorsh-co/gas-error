@@ -1,8 +1,8 @@
 /**
- * Base class for operational errors — expected failures from bad input,
- * missing resources, auth, conflicts, etc. — as opposed to programming
- * errors (bugs, unhandled exceptions), which are NOT instances of this
- * class and are always reported to the client as a generic 500.
+ * Base class for expected failures — bad input, missing resources, auth,
+ * conflicts, etc. — as opposed to programming errors (bugs, unhandled
+ * exceptions), which are NOT instances of this class and are always
+ * reported to the client as a generic 500.
  */
 class GasError extends Error {
   statusCode: number;
@@ -25,7 +25,7 @@ class GasError extends Error {
   /**
    * Central JSON error handler.
    *
-   * GasError instances are operational: logged at warn, and their
+   * GasError instances are expected: logged at warn, and their
    * message/code/details are safe to send to the client as-is.
    * Anything else is unexpected: logged at error with the full stack,
    * and reported to the client as a generic 500 with no internal detail.
