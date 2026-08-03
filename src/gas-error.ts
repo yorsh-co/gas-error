@@ -38,16 +38,26 @@ class GasError extends Error {
       logger = console,
       method = 'unknown',
       path = 'unknown',
-      sessionId = Session.getActiveUser()?.getEmail() || 'unknown',
+      sessionId = null,
       rethrow = true,
     } = options;
 
-    // Checked against GasError itself, not `this` — the static is inherited,
-    // so a call through a subclass must classify errors identically.
     const isGasError = err instanceof GasError;
     const statusCode = isGasError ? err.statusCode : 500;
 
     const code: GasErrorCode = isGasError ? err.code : 'INTERNAL_ERROR';
+
+    // Resolve session ID.
+    // Handles cases the required scope for `Session.getActiveUser`
+    // has not been provided.
+    let resolvedSessionId = sessionId;
+    if (!resolvedSessionId) {
+      try {
+        resolvedSessionId = Session.getActiveUser()?.getEmail() || 'unknown';
+      } catch {
+        resolvedSessionId = 'disabled';
+      }
+    }
 
     const logPayload: GasErrorLogPayload = {
       method,
@@ -55,7 +65,7 @@ class GasError extends Error {
       statusCode,
       code,
       message: err.message,
-      sessionId,
+      sessionId: resolvedSessionId,
     };
 
     if (isGasError && statusCode < 500) {
