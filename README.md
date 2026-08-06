@@ -266,5 +266,5 @@ Maintained by [yorsh-co](https://github.com/yorsh-co).
 ---
 
 > [!TIP]
-> Found `gas-logger` useful?
+> Found `gas-error` useful?
 > Find more Google Apps Script libraries at [github.com/yorsh-co](https://github.com/yorsh-co).
