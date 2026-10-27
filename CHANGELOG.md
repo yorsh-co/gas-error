@@ -18,16 +18,27 @@
 - Stop shipping the empty `gas-error.types.js` to the `dist` branch; the release script now excludes `*.types.js` and keeps the `.d.ts`
 - Harden the release script: fail early on a dirty working tree, a missing or empty `dist/`, or an existing `dist/<version>` tag locally or on origin; sync with `origin/dist` (creating a local `dist` that tracks it, or fast-forwarding, and refusing to discard unpushed commits); exit with a clear message when there is nothing to release; push only the `dist` branch and the release tag instead of `--tags`
 
+### Docs
+
+- Fix the `filePushOrder` example paths (the `dist` branch is flat, so no `module/` segment) and note that the paths must match where the files land in the pushed project
+- Make the `doGet` examples return the JSON response (`rethrow: false`) instead of letting the handler's error escape as an Apps Script error page
+- Clarify that a `GasError` with `statusCode >= 500` is logged at `error` with the stack but still sends its own message, code and details; only non-`GasError` values become the generic 500
+- Note the difference between `console` and gas-logger output in Cloud Logging, and that a buffered gas-logger needs `flush()` in a `finally` block or `warn`/`error` in `bypassBufferLevels`
+- Drop the claim that gas-logger is needed to type-check a gas-logger instance, now that `logger` is typed structurally, and describe `GasError.handle` as throwing by default rather than always
+- Correct the library name in the README footer
+- Fix the `ErrorConstructor` JSDoc to reference `lib.es2021`
+
 ### Added
 
 - Vitest test suite with in-memory Apps Script service mocks
+- Canonical peer type declarations in `peer/gas-error.peer.types.d.ts`, for consuming gas-* libraries to copy into `src/internal/` and type-check `GasError` and its subclasses standalone
 
 ### Changed
 
 - **Breaking:** `GasError.handle` no longer looks up the active user's email; `sessionId` defaults to `'unknown'`. Pass a string or a resolver (`sessionId: () => Session.getActiveUser().getEmail()`) to opt in. The library no longer adds the `userinfo.email` scope to consumer projects or logs emails by default
 - ESLint config uses `defineConfig` from `eslint/config` and drops the stale `no-undef` comment
 - `npm run typecheck` and ESLint also cover `test/` through `tsconfig.test.json`; `npm run check` runs the test suite
-- Vendored gas-logger peer declarations updated to 1.1.0
+- Vendored gas-logger peer declarations replaced with the canonical copy from gas-logger's `peer/`, updated to 1.1.0
 
 ---
 
