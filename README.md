@@ -176,7 +176,10 @@ src/lib/gas-error/
 >
 > ```json
 > {
->   "filePushOrder": ["dist/lib/gas-error/module/gas-error.js"]
+>   "filePushOrder": [
+>     "dist/lib/gas-error/module/gas-error.constants.js",
+>     "dist/lib/gas-error/module/gas-error.js"
+>   ]
 > }
 > ```
 >
@@ -221,7 +224,7 @@ Built-in subclasses:
 | `GasCaptchaRequiredError` | 400    | `CAPTCHA_REQUIRED` |
 
 > [!TIP]
-> `GasRateLimitError` also accepts a `retryAfterSeconds` argument, attached as `details.retryAfterSeconds`. For anything else, throw `GasError` directly with a custom `statusCode`, `code`, and `details`.
+> `GasRateLimitError` also accepts a `retryAfterSeconds` argument, attached as `details.retryAfterSeconds`; without it, no `details` are set. For anything else, throw `GasError` directly with a custom `statusCode`, `code`, and `details`. When `code` is omitted, it is derived from `statusCode` (400 `VALIDATION_ERROR`, 401 `UNAUTHORIZED`, 403 `FORBIDDEN`, 404 `NOT_FOUND`, 409 `CONFLICT`, 429 `RATE_LIMITED`); any other status falls back to `INTERNAL_ERROR`. An explicit `code` always wins.
 
 ### Handle errors centrally
 
