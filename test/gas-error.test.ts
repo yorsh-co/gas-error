@@ -29,6 +29,38 @@ describe('GasError', () => {
     expect(err.code).toBe('CONFLICT');
     expect(err.details).toEqual({ a: 1 });
   });
+
+  it.each([
+    [400, 'VALIDATION_ERROR'],
+    [401, 'UNAUTHORIZED'],
+    [403, 'FORBIDDEN'],
+    [404, 'NOT_FOUND'],
+    [409, 'CONFLICT'],
+    [429, 'RATE_LIMITED'],
+  ])('derives the code from status %i', (statusCode, code) => {
+    const { classes } = loadGasError();
+
+    expect(new classes.GasError('x', { statusCode }).code).toBe(code);
+  });
+
+  it.each([[418], [503]])(
+    'falls back to INTERNAL_ERROR for unmapped status %i',
+    (statusCode) => {
+      const { classes } = loadGasError();
+
+      expect(new classes.GasError('x', { statusCode }).code).toBe(
+        'INTERNAL_ERROR',
+      );
+    },
+  );
+
+  it('lets an explicit code override the derived one', () => {
+    const { classes } = loadGasError();
+
+    expect(
+      new classes.GasError('x', { statusCode: 404, code: 'CONFLICT' }).code,
+    ).toBe('CONFLICT');
+  });
 });
 
 describe('subclasses', () => {
@@ -80,6 +112,26 @@ describe('subclasses', () => {
     expect(new classes.GasRateLimitError('Slow down', 30).details).toEqual({
       retryAfterSeconds: 30,
     });
+  });
+
+  it('GasRateLimitError has no details without retryAfterSeconds', () => {
+    const { classes, mocks } = loadGasError();
+    const err = new classes.GasRateLimitError();
+
+    expect(err.details).toBeUndefined();
+    expect(
+      classes.GasError.handle(err, { logger: mocks.logger, rethrow: false }),
+    ).not.toHaveProperty('details');
+  });
+
+  it('GasValidationError carries object details into the payload', () => {
+    const { classes, mocks } = loadGasError();
+    const payload = classes.GasError.handle(
+      new classes.GasValidationError('Bad', { field: 'email' }),
+      { logger: mocks.logger, rethrow: false },
+    );
+
+    expect(payload.details).toEqual({ field: 'email' });
   });
 
   it('GasCaptchaRequiredError carries details', () => {

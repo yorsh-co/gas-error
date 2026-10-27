@@ -63,7 +63,11 @@ export interface GasErrorClasses {
 }
 
 /** Source files in load order; later files depend on earlier ones. */
-const SOURCE_FILES = ['gas-error.types.ts', 'gas-error.ts'];
+const SOURCE_FILES = [
+  'gas-error.types.ts',
+  'gas-error.constants.ts',
+  'gas-error.ts',
+];
 
 /**
  * The sources are global-scope scripts without exports, so they are

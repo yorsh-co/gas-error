@@ -25,6 +25,10 @@ const explicitRethrow: IsNever<ReturnType<typeof rethrowsExplicitly>> = true;
 
 const payloadIsNotNever: IsNever<ReturnType<typeof returnsPayload>> = false;
 
+const validationObjectDetails = new GasValidationError('x', {
+  field: 'email',
+});
+
 const okIsFalse: GasErrorSafePayload['ok'] extends false ? true : false = true;
 
 export {
@@ -37,4 +41,5 @@ export {
   returnsPayload,
   okIsFalse,
   runtimeRethrow,
+  validationObjectDetails,
 };

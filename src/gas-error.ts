@@ -15,7 +15,10 @@ class GasError extends Error {
 
     this.name = this.constructor.name;
     this.statusCode = options.statusCode || 500;
-    this.code = options.code || 'INTERNAL_ERROR';
+    this.code =
+      options.code ||
+      GAS_ERROR_STATUS_CODES[this.statusCode] ||
+      'INTERNAL_ERROR';
     this.details = options.details;
     this.isOperational = true;
 
@@ -114,7 +117,7 @@ class GasError extends Error {
 }
 
 class GasValidationError extends GasError {
-  constructor(message = 'Invalid request', details?: string) {
+  constructor(message = 'Invalid request', details?: unknown) {
     super(message, { statusCode: 400, code: 'VALIDATION_ERROR', details });
   }
 }
@@ -148,7 +151,9 @@ class GasRateLimitError extends GasError {
     super(message, {
       statusCode: 429,
       code: 'RATE_LIMITED',
-      details: { retryAfterSeconds },
+      ...(retryAfterSeconds !== undefined
+        ? { details: { retryAfterSeconds } }
+        : {}),
     });
   }
 }
