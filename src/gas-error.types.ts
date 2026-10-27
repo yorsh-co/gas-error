@@ -41,7 +41,7 @@ type GasErrorLogPayload = {
  * `message`. Carries no stack or internal detail — safe to send as-is.
  */
 interface GasErrorSafePayload {
-  ok: boolean;
+  ok: false;
   error: string;
   status: number;
   code: GasErrorCode;

@@ -107,7 +107,7 @@ type GasErrorLogPayload = {
  * `message`. Carries no stack or internal detail — safe to send as-is.
  */
 interface GasErrorSafePayload {
-  ok: boolean;
+  ok: false;
   error: string;
   status: number;
   code: GasErrorCode;
@@ -131,6 +131,10 @@ declare class GasError extends Error {
   /**
    * Central JSON error handler.
    *
+   * Accepts any thrown value: an `Error` is used as-is, anything else is
+   * treated as an unexpected error whose message is `String(err)` and which
+   * has no stack.
+   *
    * GasError instances are expected: logged at warn, and their
    * message/code/details are safe to send to the client as-is.
    * Anything else is unexpected: logged at error with the full stack,
@@ -139,7 +143,15 @@ declare class GasError extends Error {
    * Throws the stringified envelope unless `rethrow` is false.
    */
   static handle(
-    err: Error | GasError,
+    err: unknown,
+    options: GasErrorHandlerOptions & { rethrow: false },
+  ): GasErrorSafePayload;
+  static handle(
+    err: unknown,
+    options?: GasErrorHandlerOptions & { rethrow?: true },
+  ): never;
+  static handle(
+    err: unknown,
     options?: GasErrorHandlerOptions,
   ): GasErrorSafePayload;
 }
