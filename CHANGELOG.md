@@ -20,6 +20,7 @@
 
 ### Docs
 
+- Document the optional `userinfo.email` scope under Google's granular OAuth consent screen (granted logs the email, declined logs `'disabled'`, blank logs `'unknown'`), and that logged emails reach your logs and any gas-logger sheet sink
 - Fix the `filePushOrder` example paths (the `dist` branch is flat, so no `module/` segment) and note that the paths must match where the files land in the pushed project
 - Make the `doGet` examples return the JSON response (`rethrow: false`) instead of letting the handler's error escape as an Apps Script error page
 - Clarify that a `GasError` with `statusCode >= 500` is logged at `error` with the stack but still sends its own message, code and details; only non-`GasError` values become the generic 500
@@ -30,12 +31,12 @@
 
 ### Added
 
+- `sessionId` accepts a resolver function, called lazily: a throw logs `'disabled'` and an empty result `'unknown'`
 - Vitest test suite with in-memory Apps Script service mocks
 - Canonical peer type declarations in `peer/gas-error.peer.types.d.ts`, for consuming gas-* libraries to copy into `src/internal/` and type-check `GasError` and its subclasses standalone
 
 ### Changed
 
-- **Breaking:** `GasError.handle` no longer looks up the active user's email; `sessionId` defaults to `'unknown'`. Pass a string or a resolver (`sessionId: () => Session.getActiveUser().getEmail()`) to opt in. The library no longer adds the `userinfo.email` scope to consumer projects or logs emails by default
 - ESLint config uses `defineConfig` from `eslint/config` and drops the stale `no-undef` comment
 - `npm run typecheck` and ESLint also cover `test/` through `tsconfig.test.json`; `npm run check` runs the test suite
 - Vendored gas-logger peer declarations replaced with the canonical copy from gas-logger's `peer/`, updated to 1.1.0

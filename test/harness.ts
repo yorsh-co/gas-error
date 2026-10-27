@@ -106,8 +106,8 @@ export function loadGasError(overrides: Partial<Mocks> = {}): {
   mocks: Mocks;
 } {
   const mocks = { ...createMocks(), ...overrides };
-  const { console } = mocks;
-  const context = vm.createContext({ console, Error });
+  const { Session, console } = mocks;
+  const context = vm.createContext({ Session, console, Error });
 
   return {
     classes: script.runInContext(context) as GasErrorClasses,

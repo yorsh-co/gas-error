@@ -81,15 +81,22 @@ interface GasErrorHandlerOptions {
   path?: string;
 
   /**
-   * Who the request belongs to, logged as `sessionId`. Pass a string, or a
-   * function that returns one. Omitted or empty logs `'unknown'`.
+   * Who the request belongs to, logged as `sessionId`. Resolved as:
+   * - a non-empty string is used as-is;
+   * - a function is called lazily and its result used;
+   * - omitted or empty falls back to the active user's email via
+   *   `Session.getActiveUser().getEmail()`.
    *
-   * The library never looks up the active user itself, so it adds no OAuth
-   * scope to your project. To log the active user's email, opt in with a
-   * resolver, e.g. `() => Session.getActiveUser().getEmail()`; that requires
-   * the `https://www.googleapis.com/auth/userinfo.email` scope in your
-   * project. A resolver that throws logs `'disabled'`, one that returns an
-   * empty value logs `'unknown'`.
+   * The fallback makes Apps Script list the
+   * `https://www.googleapis.com/auth/userinfo.email` scope in the consent
+   * prompt, detected statically from the library source. With the granular
+   * consent screen (V8 runtime) the user may decline it. The entry logs
+   * `'disabled'` when the lookup throws (scope declined or unavailable) and
+   * `'unknown'` when it returns an empty value. A resolver that throws or
+   * returns an empty value is treated the same way.
+   *
+   * Passing a string or a resolver skips the lookup at runtime, but the scope
+   * is still listed in the prompt.
    */
   sessionId?: string | (() => string);
 
