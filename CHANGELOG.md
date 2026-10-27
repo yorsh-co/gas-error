@@ -39,6 +39,7 @@
 - ESLint config uses `defineConfig` from `eslint/config` and drops the stale `no-undef` comment
 - `npm run typecheck` and ESLint also cover `test/` through `tsconfig.test.json`; `npm run check` runs the test suite
 - Vendored gas-logger peer declarations replaced with the canonical copy from gas-logger's `peer/`, updated to 1.1.0
+- Bump the transitive dev dependency `brace-expansion` to 5.0.12 to resolve high-severity DoS advisories reported by `npm audit`
 
 ---
 
