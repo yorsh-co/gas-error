@@ -180,6 +180,92 @@ describe('GasError.handle', () => {
     });
   });
 
+  it.each([[null], [undefined]])(
+    'returns the safe 500 payload for %s',
+    (value) => {
+      const { classes, mocks } = loadGasError();
+
+      const payload = classes.GasError.handle(value, {
+        logger: mocks.logger,
+        rethrow: false,
+      });
+
+      expect(payload).toMatchObject({
+        ok: false,
+        status: 500,
+        code: 'INTERNAL_ERROR',
+      });
+    },
+  );
+
+  it('logs a thrown string as the message', () => {
+    const { classes, mocks } = loadGasError();
+
+    classes.GasError.handle('boom', { logger: mocks.logger, rethrow: false });
+
+    expect(mocks.logger.error).toHaveBeenCalledWith(
+      'Unexpected error',
+      expect.objectContaining({ message: 'boom' }),
+    );
+  });
+
+  it.each([
+    [{ a: 1 }, '[object Object]'],
+    [42, '42'],
+  ])('reports a thrown %j as a safe 500', (value, message) => {
+    const { classes, mocks } = loadGasError();
+
+    const payload = classes.GasError.handle(value, {
+      logger: mocks.logger,
+      rethrow: false,
+    });
+
+    expect(mocks.logger.warn).not.toHaveBeenCalled();
+    expect(mocks.logger.error).toHaveBeenCalledWith(
+      'Unexpected error',
+      expect.objectContaining({ statusCode: 500, message }),
+    );
+    expect(payload).toEqual({
+      ok: false,
+      error: 'Internal server error',
+      status: 500,
+      code: 'INTERNAL_ERROR',
+    });
+  });
+
+  it.each([[0], [''], [false]])(
+    'keeps details of %j in the safe payload',
+    (details) => {
+      const { classes, mocks } = loadGasError();
+
+      const payload = classes.GasError.handle(
+        new classes.GasError('x', { statusCode: 400, details }),
+        { logger: mocks.logger, rethrow: false },
+      );
+
+      expect(payload).toHaveProperty('details', details);
+    },
+  );
+
+  it('rethrows an Error with the JSON payload for a non-Error input', () => {
+    const { classes, mocks } = loadGasError();
+
+    let thrown: unknown;
+    try {
+      classes.GasError.handle('boom', { logger: mocks.logger });
+    } catch (e) {
+      thrown = e;
+    }
+
+    expect(thrown).toBeInstanceOf(Error);
+    expect(JSON.parse((thrown as Error).message)).toEqual({
+      ok: false,
+      error: 'Internal server error',
+      status: 500,
+      code: 'INTERNAL_ERROR',
+    } satisfies GasErrorPayload);
+  });
+
   it('rethrows an Error whose message is the JSON payload by default', () => {
     const { classes, mocks } = loadGasError();
     const err = new classes.GasForbiddenError();

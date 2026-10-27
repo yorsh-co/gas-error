@@ -25,13 +25,31 @@ class GasError extends Error {
   /**
    * Central JSON error handler.
    *
+   * Accepts any thrown value: an `Error` is used as-is, anything else is
+   * treated as an unexpected error whose message is `String(err)` and which
+   * has no stack.
+   *
    * GasError instances are expected: logged at warn, and their
    * message/code/details are safe to send to the client as-is.
    * Anything else is unexpected: logged at error with the full stack,
    * and reported to the client as a generic 500 with no internal detail.
+   *
+   * Throws the stringified envelope unless `rethrow` is false.
    */
   static handle(
-    err: Error | GasError,
+    err: unknown,
+    options: GasErrorHandlerOptions & { rethrow: false },
+  ): GasErrorSafePayload;
+  static handle(
+    err: unknown,
+    options?: GasErrorHandlerOptions & { rethrow?: true },
+  ): never;
+  static handle(
+    err: unknown,
+    options?: GasErrorHandlerOptions,
+  ): GasErrorSafePayload;
+  static handle(
+    err: unknown,
     options: GasErrorHandlerOptions = {},
   ): GasErrorSafePayload {
     const {
@@ -41,6 +59,9 @@ class GasError extends Error {
       sessionId = null,
       rethrow = true,
     } = options;
+
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
 
     const isGasError = err instanceof GasError;
     const statusCode = isGasError ? err.statusCode : 500;
@@ -64,22 +85,24 @@ class GasError extends Error {
       path,
       statusCode,
       code,
-      message: err.message,
+      message,
       sessionId: resolvedSessionId,
     };
 
     if (isGasError && statusCode < 500) {
       logger.warn('Request error', logPayload);
     } else {
-      logger.error('Unexpected error', { ...logPayload, stack: err.stack });
+      logger.error('Unexpected error', { ...logPayload, stack });
     }
 
     const safePayload: GasErrorSafePayload = {
       ok: false,
-      error: isGasError ? err.message : 'Internal server error',
+      error: isGasError ? message : 'Internal server error',
       status: statusCode,
       code,
-      ...(isGasError && err.details ? { details: err.details } : {}),
+      ...(isGasError && err.details !== undefined
+        ? { details: err.details }
+        : {}),
     };
 
     if (rethrow) {

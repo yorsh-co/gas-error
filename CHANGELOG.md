@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `GasError.handle` no longer throws a `TypeError` on `null`/`undefined`, and logs non-`Error` values (strings, numbers, plain objects) with their string form as the message
+- `GasError.handle` accepts `unknown`, so it type-checks with strict catch variables
+- `GasError.handle` returns `never` when it rethrows, via overloads on the `rethrow` option
+- Falsy `details` (`0`, `''`, `false`) are kept in the safe payload
+- `GasErrorSafePayload.ok` is typed as `false`
+
 ### Added
 
 - Vitest test suite with in-memory Apps Script service mocks

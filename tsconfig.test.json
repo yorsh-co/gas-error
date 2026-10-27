@@ -8,5 +8,5 @@
     "declaration": false,
     "types": ["node", "google-apps-script"]
   },
-  "include": ["test/**/*.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts"]
 }
