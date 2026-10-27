@@ -19,7 +19,7 @@
 - `GasError.handle(err, options)`: logs a `GasError` with `statusCode < 500` at `warn` and one with `statusCode >= 500` at `error` with the stack — either way its message/code/details are safe to send to the client as-is; logs anything else at `error` with the full stack, and reports it to the client as a generic 500 with no internal detail
 - Accepts any thrown value (`unknown`): an `Error` is used as-is, anything else is logged as an unexpected error with its `String(...)` form as the message
 - Throws a `JSON.stringify`'d payload by default — `{ ok: false, error, status, code, details? }` — so it can be caught once at your entry point and returned as the response
-- Configurable `logger` (defaults to `console`, also accepts a `gas-logger` instance or any object with `warn`/`error`) and `sessionId` (a string or a resolver function; defaults to `'unknown'` — the library never looks up the active user, so it adds no [OAuth scope](#oauth-scope))
+- Configurable `logger` (defaults to `console`, also accepts a `gas-logger` instance or any object with `warn`/`error`) and `sessionId` (a string or a resolver function; defaults to the active user's email, which makes Apps Script list the optional `userinfo.email` [OAuth scope](#oauth-scope) in the consent prompt)
 - Written in TypeScript; ships compiled `.js` plus matching `.d.ts` declarations — no build step required downstream
 - Accepts a `gas-logger` instance for structured logging to the Apps Script Execution Log and, optionally, to a log sheet in Google Sheets
 - No required runtime dependencies
@@ -61,19 +61,19 @@ function doPost(e) {
 
 ### OAuth scope
 
-`gas-error` requests no OAuth scopes. It never calls `Session`, so including it in a project does not add the `userinfo.email` consent prompt, and no user email is logged by default.
+When `sessionId` is omitted, `GasError.handle` labels log entries with `Session.getActiveUser().getEmail()`. Apps Script detects that call in the library source, so the consent prompt lists the `https://www.googleapis.com/auth/userinfo.email` scope.
 
-To label log entries with the active user's email, opt in by passing a resolver as `sessionId`:
+With Google's [granular OAuth consent screen](https://developers.google.com/apps-script/concepts/scopes) (V8 runtime), the user can grant or uncheck that scope. The code runs either way:
 
-```js
-GasError.handle(err, {
-  method: 'POST',
-  path: 'doPost',
-  sessionId: () => Session.getActiveUser().getEmail(),
-});
-```
+| Outcome                                                                                                                                         | Logged `sessionId` |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| Scope granted and the address is available                                                                                                      | the user's email   |
+| Scope declined or unavailable (the lookup throws)                                                                                               | `'disabled'`       |
+| Blank email (a consumer Gmail account, or a web app deployed to "anyone" that executes as the owner or where the caller is outside your domain) | `'unknown'`        |
 
-That call lives in your code, so Apps Script infers the scope from your source. You only need to declare it explicitly if your `appsscript.json` pins `oauthScopes`:
+Granular consent applies to new grants only; consents already granted are unaffected.
+
+If your `appsscript.json` pins `oauthScopes`, add the scope to offer it. Leave it out to never request it; the lookup then fails and logs `'disabled'`:
 
 ```json
 {
@@ -81,10 +81,21 @@ That call lives in your code, so Apps Script infers the scope from your source. 
 }
 ```
 
-If the resolver throws (for example, the scope is missing), the entry logs as `sessionId: 'disabled'`.
+To supply your own identifier, pass `sessionId` as a string or a resolver:
+
+```js
+GasError.handle(err, {
+  method: 'POST',
+  path: 'doPost',
+  sessionId: () => MyAuth.currentUserId(),
+});
+```
 
 > [!NOTE]
-> Even with the scope granted, `getEmail()` returns a blank string when the address isn't available to the script — a consumer Gmail account, or a web app deployed to "anyone" where the caller is outside your domain. That case logs as `sessionId: 'unknown'`. Pass a stable identifier as a string if you need a reliable one in those deployments.
+> A string or resolver skips the lookup at runtime, but it does not remove the scope from the consent prompt, since Apps Script detects scopes statically from the source.
+
+> [!IMPORTANT]
+> When the scope is granted, user emails are written to your logs, and to the log sheet if you use a `gas-logger` sheet sink. Pass your own `sessionId` if that is not acceptable for your deployment.
 
 ## Quick Start
 
@@ -257,7 +268,6 @@ try {
   GasError.handle(err, {
     method: 'POST',
     path: 'doPost',
-    sessionId: () => Session.getActiveUser().getEmail(),
   });
 }
 ```
@@ -265,7 +275,7 @@ try {
 `GasError.handle` throws by default. Set the `rethrow` option to `false` to set the handler to return the cleaned error body instead of throwing. For a `GasError` with `statusCode < 500`, it logs `'Request error'` at `warn` with `{ method, path, statusCode, code, message, sessionId }`. A `GasError` with `statusCode >= 500` and any other thrown value — including unexpected bugs — is logged as `'Unexpected error'` at `error` with the same payload plus the full `stack`. The two differ in what the client sees: a `GasError` still sends its own `message`, `code` and `details` (its message is the client-safe channel), while any non-`GasError` value is reported as a generic 500 (`'Internal server error'`, `INTERNAL_ERROR`) with no internal detail. When it throws, the error's `.message` is a JSON string: `{ ok: false, error, status, code, details? }`.
 
 > [!NOTE]
-> `method`, `path` and `sessionId` default to `'unknown'` if not provided. `sessionId` accepts a string or a resolver function; the library never looks up the active user itself. A resolver that throws logs `'disabled'` and one that returns an empty value logs `'unknown'` — see [OAuth scope](#oauth-scope) to log the active user's email.
+> `method` and `path` default to `'unknown'` if not provided. `sessionId` accepts a string or a resolver function; when omitted, the library logs the active user's email. A lookup or resolver that throws logs `'disabled'` and one that returns an empty value logs `'unknown'` — see [OAuth scope](#oauth-scope) for the optional `userinfo.email` consent.
 
 ### Use a custom logger
 
