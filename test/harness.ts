@@ -1,7 +1,5 @@
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import vm from 'node:vm';
-import ts from 'typescript';
+import { createGasLoader } from 'gas-dev-config/test';
 import { createMocks, type Mocks } from './mocks';
 
 type Meta = Record<string, unknown>;
@@ -69,32 +67,20 @@ const SOURCE_FILES = [
   'gas-error.ts',
 ];
 
-/**
- * The sources are global-scope scripts without exports, so they are
- * transpiled once and concatenated into a single script.
- */
-const script = new vm.Script(
-  SOURCE_FILES.map((file) => {
-    const source = readFileSync(
-      fileURLToPath(new URL(`../src/${file}`, import.meta.url)),
-      'utf8',
-    );
-    return ts.transpileModule(source, {
-      compilerOptions: { target: ts.ScriptTarget.ES2021 },
-    }).outputText;
-  }).join('\n') +
-    `
-({
-  GasError,
-  GasValidationError,
-  GasNotFoundError,
-  GasUnauthorizedError,
-  GasForbiddenError,
-  GasConflictError,
-  GasRateLimitError,
-  GasCaptchaRequiredError,
-});`,
-);
+const load = createGasLoader<GasErrorClasses>({
+  files: SOURCE_FILES.map((file) => `src/${file}`),
+  exports: [
+    'GasError',
+    'GasValidationError',
+    'GasNotFoundError',
+    'GasUnauthorizedError',
+    'GasForbiddenError',
+    'GasConflictError',
+    'GasRateLimitError',
+    'GasCaptchaRequiredError',
+  ],
+  root: fileURLToPath(new URL('..', import.meta.url)),
+});
 
 /**
  * Evaluates the error sources in a fresh context wired to fake Apps Script
@@ -107,10 +93,6 @@ export function loadGasError(overrides: Partial<Mocks> = {}): {
 } {
   const mocks = { ...createMocks(), ...overrides };
   const { Session, console } = mocks;
-  const context = vm.createContext({ Session, console, Error });
 
-  return {
-    classes: script.runInContext(context) as GasErrorClasses,
-    mocks,
-  };
+  return { classes: load({ Session, console, Error }), mocks };
 }
