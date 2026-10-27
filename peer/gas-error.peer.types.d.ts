@@ -81,11 +81,17 @@ interface GasErrorHandlerOptions {
   path?: string;
 
   /**
-   * Who the request belongs to. Falls back to the active user's email,
-   * which requires the `https://www.googleapis.com/auth/userinfo.email`
-   * scope — without it the value logs as `'unknown'` or `'disabled'`.
+   * Who the request belongs to, logged as `sessionId`. Pass a string, or a
+   * function that returns one. Omitted or empty logs `'unknown'`.
+   *
+   * The library never looks up the active user itself, so it adds no OAuth
+   * scope to your project. To log the active user's email, opt in with a
+   * resolver, e.g. `() => Session.getActiveUser().getEmail()`; that requires
+   * the `https://www.googleapis.com/auth/userinfo.email` scope in your
+   * project. A resolver that throws logs `'disabled'`, one that returns an
+   * empty value logs `'unknown'`.
    */
-  sessionId?: string;
+  sessionId?: string | (() => string);
 
   /** Set to false to return the safe error payload. Defaults to true. */
   rethrow?: boolean;

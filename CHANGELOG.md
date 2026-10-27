@@ -22,6 +22,7 @@
 
 ### Changed
 
+- **Breaking:** `GasError.handle` no longer looks up the active user's email; `sessionId` defaults to `'unknown'`. Pass a string or a resolver (`sessionId: () => Session.getActiveUser().getEmail()`) to opt in. The library no longer adds the `userinfo.email` scope to consumer projects or logs emails by default
 - ESLint config uses `defineConfig` from `eslint/config` and drops the stale `no-undef` comment
 - `npm run typecheck` and ESLint also cover `test/` through `tsconfig.test.json`; `npm run check` runs the test suite
 - Vendored gas-logger peer declarations updated to 1.1.0

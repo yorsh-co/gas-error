@@ -21,7 +21,7 @@ export interface GasErrorHandlerTestOptions {
   };
   method?: string;
   path?: string;
-  sessionId?: string;
+  sessionId?: string | (() => string);
   rethrow?: boolean;
 }
 
@@ -106,8 +106,8 @@ export function loadGasError(overrides: Partial<Mocks> = {}): {
   mocks: Mocks;
 } {
   const mocks = { ...createMocks(), ...overrides };
-  const { Session, console } = mocks;
-  const context = vm.createContext({ Session, console, Error });
+  const { console } = mocks;
+  const context = vm.createContext({ console, Error });
 
   return {
     classes: script.runInContext(context) as GasErrorClasses,

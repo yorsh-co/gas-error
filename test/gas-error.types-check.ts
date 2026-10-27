@@ -34,6 +34,11 @@ const consoleLogger: GasErrorLogger = console;
 declare const gasLogger: GasLogger;
 const gasLoggerSink: GasErrorLogger = gasLogger;
 
+const stringSessionId: GasErrorHandlerOptions = { sessionId: 'user-1' };
+const resolverSessionId: GasErrorHandlerOptions = {
+  sessionId: () => 'user-1',
+};
+
 const okIsFalse: GasErrorSafePayload['ok'] extends false ? true : false = true;
 
 export {
@@ -45,8 +50,10 @@ export {
   payloadIsNotNever,
   rethrows,
   rethrowsExplicitly,
+  resolverSessionId,
   returnsPayload,
   okIsFalse,
   runtimeRethrow,
+  stringSessionId,
   validationObjectDetails,
 };

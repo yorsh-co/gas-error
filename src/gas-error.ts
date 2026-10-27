@@ -59,7 +59,7 @@ class GasError extends Error {
       logger = console,
       method = 'unknown',
       path = 'unknown',
-      sessionId = null,
+      sessionId,
       rethrow = true,
     } = options;
 
@@ -71,17 +71,19 @@ class GasError extends Error {
 
     const code: GasErrorCode = isGasError ? err.code : 'INTERNAL_ERROR';
 
-    // Resolve session ID.
-    // Handles cases the required scope for `Session.getActiveUser`
-    // has not been provided.
-    let resolvedSessionId = sessionId;
-    if (!resolvedSessionId) {
+    // Resolve session ID. A resolver that throws (e.g. a missing OAuth
+    // scope) logs 'disabled'; an empty value logs 'unknown'.
+    let resolvedSessionId = '';
+    if (typeof sessionId === 'function') {
       try {
-        resolvedSessionId = Session.getActiveUser()?.getEmail() || 'unknown';
+        resolvedSessionId = sessionId();
       } catch {
         resolvedSessionId = 'disabled';
       }
+    } else if (sessionId) {
+      resolvedSessionId = sessionId;
     }
+    resolvedSessionId ||= 'unknown';
 
     const logPayload: GasErrorLogPayload = {
       method,

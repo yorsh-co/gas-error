@@ -375,12 +375,8 @@ describe('GasError.handle', () => {
   });
 
   describe('sessionId', () => {
-    function resolve(
-      setup: (mocks: ReturnType<typeof loadGasError>['mocks']) => void,
-      sessionId?: string,
-    ): unknown {
+    function resolve(sessionId?: string | (() => string)): unknown {
       const { classes, mocks } = loadGasError();
-      setup(mocks);
       classes.GasError.handle(new classes.GasNotFoundError(), {
         logger: mocks.logger,
         rethrow: false,
@@ -393,36 +389,31 @@ describe('GasError.handle', () => {
       return meta.sessionId;
     }
 
-    it('uses the explicit value without a Session lookup', () => {
-      const { classes, mocks } = loadGasError();
-      classes.GasError.handle(new classes.GasNotFoundError(), {
-        logger: mocks.logger,
-        sessionId: 'explicit',
-        rethrow: false,
-      });
-
-      expect(mocks.Session.getActiveUser).not.toHaveBeenCalled();
-      expect(mocks.logger.warn).toHaveBeenCalledWith(
-        'Request error',
-        expect.objectContaining({ sessionId: 'explicit' }),
-      );
+    it("is 'unknown' when omitted, without touching Session", () => {
+      expect(resolve()).toBe('unknown');
     });
 
-    it('falls back to the active user email', () => {
-      expect(resolve(() => undefined)).toBe('user@example.com');
+    it('uses a string as-is', () => {
+      expect(resolve('explicit')).toBe('explicit');
     });
 
-    it("is 'unknown' when the email is empty", () => {
-      expect(resolve((m) => m.getEmail.mockReturnValue(''))).toBe('unknown');
+    it("is 'unknown' for an empty string", () => {
+      expect(resolve('')).toBe('unknown');
     });
 
-    it("is 'disabled' when Session throws", () => {
+    it('uses the value returned by a resolver', () => {
+      expect(resolve(() => 'user@example.com')).toBe('user@example.com');
+    });
+
+    it("is 'unknown' when the resolver returns an empty value", () => {
+      expect(resolve(() => '')).toBe('unknown');
+    });
+
+    it("is 'disabled' when the resolver throws", () => {
       expect(
-        resolve((m) =>
-          m.getEmail.mockImplementation(() => {
-            throw new Error('Missing scope');
-          }),
-        ),
+        resolve(() => {
+          throw new Error('Missing scope');
+        }),
       ).toBe('disabled');
     });
   });
