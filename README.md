@@ -7,7 +7,7 @@
 > [!NOTE]
 > The goal of this project is to give Apps Script web apps a single place to define the failures you expect — validation problems, missing resources, auth — and a single handler that logs and serializes them consistently, without leaking internal detail when something unexpected goes wrong.
 
-`gas-error` provides a `GasError` base class plus seven common subclasses (`GasValidationError`, `GasNotFoundError`, `GasUnauthorizedError`, `GasForbiddenError`, `GasConflictError`, `GasRateLimitError`, `GasCaptchaRequiredError`), and a `GasError.handle(err, options)` static that logs the error and throws a JSON-serializable payload ready to return from your web app's entry point.
+`gas-error` provides a `GasError` base class plus seven common subclasses (`GasValidationError`, `GasNotFoundError`, `GasUnauthorizedError`, `GasForbiddenError`, `GasConflictError`, `GasRateLimitError`, `GasCaptchaRequiredError`), and a `GasError.handle(err, options)` static that logs the error and, by default, throws a JSON-serializable payload (or returns it with `rethrow: false`) ready to send from your web app's entry point.
 
 > **Disclaimer:**
 > This project and [Yorsh](https://github.com/yorsh-co) are independent and are not affiliated with, endorsed by, or associated with Google LLC.
@@ -16,10 +16,10 @@
 
 - `GasError` base class carrying a `statusCode`, a `code` (`GasErrorCode`), and optional `details` — marked `isOperational: true` to distinguish expected failures from programming bugs
 - Seven built-in subclasses for common cases: `GasValidationError` (400), `GasUnauthorizedError` (401), `GasForbiddenError` (403), `GasNotFoundError` (404), `GasConflictError` (409), `GasRateLimitError` (429, with a `retryAfterSeconds` detail), `GasCaptchaRequiredError` (400)
-- `GasError.handle(err, options)`: logs `GasError` instances at `warn` (their message/code/details are safe to send to the client as-is); logs anything else at `error` with the full stack, and reports it to the client as a generic 500 with no internal detail
+- `GasError.handle(err, options)`: logs a `GasError` with `statusCode < 500` at `warn` and one with `statusCode >= 500` at `error` with the stack — either way its message/code/details are safe to send to the client as-is; logs anything else at `error` with the full stack, and reports it to the client as a generic 500 with no internal detail
 - Accepts any thrown value (`unknown`): an `Error` is used as-is, anything else is logged as an unexpected error with its `String(...)` form as the message
 - Throws a `JSON.stringify`'d payload by default — `{ ok: false, error, status, code, details? }` — so it can be caught once at your entry point and returned as the response
-- Configurable `logger` (defaults to `console`, also accepts a `GasLogger` instance) and `sessionId` (a string or a resolver function; defaults to `'unknown'` — the library never looks up the active user, so it adds no [OAuth scope](#oauth-scope))
+- Configurable `logger` (defaults to `console`, also accepts a `gas-logger` instance or any object with `warn`/`error`) and `sessionId` (a string or a resolver function; defaults to `'unknown'` — the library never looks up the active user, so it adds no [OAuth scope](#oauth-scope))
 - Written in TypeScript; ships compiled `.js` plus matching `.d.ts` declarations — no build step required downstream
 - Accepts a `gas-logger` instance for structured logging to the Apps Script Execution Log and, optionally, to a log sheet in Google Sheets
 - No required runtime dependencies
@@ -57,7 +57,7 @@ function doPost(e) {
 ## Requirements
 
 > [!IMPORTANT]
-> `gas-error` has no runtime dependencies and no required peer packages — `GasError.handle`'s `logger` option defaults to `console`. If you pass a `GasLogger` instance as `logger` and want TypeScript to type-check it, `gas-logger` needs to be available in your project too.
+> `gas-error` has no runtime dependencies and no required peer packages — `GasError.handle`'s `logger` option defaults to `console`. `logger` is typed structurally (`GasErrorLogger`: any object with `warn` and `error`), so passing a `gas-logger` instance type-checks without `gas-logger`'s declarations being available in your project.
 
 ### OAuth scope
 
@@ -116,7 +116,14 @@ function doGet(e) {
   try {
     throw new GasNotFoundError('Record not found');
   } catch (err) {
-    GasError.handle(err, { method: 'GET', path: 'doGet' });
+    const payload = GasError.handle(err, {
+      method: 'GET',
+      path: 'doGet',
+      rethrow: false,
+    });
+    return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(
+      ContentService.MimeType.JSON,
+    );
   }
 }
 ```
@@ -183,11 +190,13 @@ src/lib/gas-error/
 > ```json
 > {
 >   "filePushOrder": [
->     "dist/lib/gas-error/module/gas-error.constants.js",
->     "dist/lib/gas-error/module/gas-error.js"
+>     "dist/lib/gas-error/gas-error.constants.js",
+>     "dist/lib/gas-error/gas-error.js"
 >   ]
 > }
 > ```
+>
+> Use the path where the files land in your pushed project, e.g. `src/lib/gas-error/...` when pushing the subtree as-is.
 >
 > Alternatively, you can manually move these files to the top of the file list in the Apps Script editor.
 
@@ -204,7 +213,14 @@ function doGet(e) {
   try {
     throw new GasNotFoundError('Record not found');
   } catch (err) {
-    GasError.handle(err, { method: 'GET', path: 'doGet' });
+    const payload = GasError.handle(err, {
+      method: 'GET',
+      path: 'doGet',
+      rethrow: false,
+    });
+    return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(
+      ContentService.MimeType.JSON,
+    );
   }
 }
 ```
@@ -246,7 +262,7 @@ try {
 }
 ```
 
-`GasError.handle` throws by default. Set the `rethrow` option to `false` to set the handler to return the cleaned error body instead of throwing. For a `GasError` with `statusCode < 500`, it logs `'Request error'` at `warn` with `{ method, path, statusCode, code, message, sessionId }`. For anything else — including unexpected bugs — it logs `'Unexpected error'` at `error` with the same payload plus the full `stack`, and the client only ever sees a generic 500 with no internal detail. When it throws, the error's `.message` is a JSON string: `{ ok: false, error, status, code, details? }`.
+`GasError.handle` throws by default. Set the `rethrow` option to `false` to set the handler to return the cleaned error body instead of throwing. For a `GasError` with `statusCode < 500`, it logs `'Request error'` at `warn` with `{ method, path, statusCode, code, message, sessionId }`. A `GasError` with `statusCode >= 500` and any other thrown value — including unexpected bugs — is logged as `'Unexpected error'` at `error` with the same payload plus the full `stack`. The two differ in what the client sees: a `GasError` still sends its own `message`, `code` and `details` (its message is the client-safe channel), while any non-`GasError` value is reported as a generic 500 (`'Internal server error'`, `INTERNAL_ERROR`) with no internal detail. When it throws, the error's `.message` is a JSON string: `{ ok: false, error, status, code, details? }`.
 
 > [!NOTE]
 > `method`, `path` and `sessionId` default to `'unknown'` if not provided. `sessionId` accepts a string or a resolver function; the library never looks up the active user itself. A resolver that throws logs `'disabled'` and one that returns an empty value logs `'unknown'` — see [OAuth scope](#oauth-scope) to log the active user's email.
@@ -260,6 +276,12 @@ GasError.handle(err, { logger });
 ```
 
 If `logger` is omitted, `GasError.handle` falls back to `console`.
+
+> [!NOTE]
+> With the default `console`, Apps Script records `logger.warn('Request error', payload)` as a plain text line. A `gas-logger` instance emits the same entry as a structured `jsonPayload` in Cloud Logging.
+
+> [!TIP]
+> If your `gas-logger` instance is buffered (`flushThreshold`), call `logger.flush()` in a `finally` block, or include `'warn'` and `'error'` in `bypassBufferLevels`, so the handler's entries reach the sheet even when `GasError.handle` rethrows.
 
 ## License
 

@@ -168,7 +168,7 @@ class GasCaptchaRequiredError extends GasError {
 
 /**
  * V8 engine extension for capturing a stack trace without the constructor
- * frame. Not part of the ECMAScript spec, so absent from lib.es2019 and
+ * frame. Not part of the ECMAScript spec, so absent from lib.es2021 and
  * @types/google-apps-script — declared here since Apps Script runs on V8.
  * Confirmed present at runtime in the GAS sandbox.
  */
