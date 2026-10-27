@@ -15,7 +15,10 @@ class GasError extends Error {
 
     this.name = this.constructor.name;
     this.statusCode = options.statusCode || 500;
-    this.code = options.code || 'INTERNAL_ERROR';
+    this.code =
+      options.code ||
+      GAS_ERROR_STATUS_CODES[this.statusCode] ||
+      'INTERNAL_ERROR';
     this.details = options.details;
     this.isOperational = true;
 
@@ -25,61 +28,91 @@ class GasError extends Error {
   /**
    * Central JSON error handler.
    *
+   * Accepts any thrown value: an `Error` is used as-is, anything else is
+   * treated as an unexpected error whose message is `String(err)` and which
+   * has no stack.
+   *
    * GasError instances are expected: logged at warn, and their
    * message/code/details are safe to send to the client as-is.
    * Anything else is unexpected: logged at error with the full stack,
    * and reported to the client as a generic 500 with no internal detail.
+   *
+   * Throws the stringified envelope unless `rethrow` is false.
    */
   static handle(
-    err: Error | GasError,
+    err: unknown,
+    options: GasErrorHandlerOptions & { rethrow: false },
+  ): GasErrorSafePayload;
+  static handle(
+    err: unknown,
+    options?: GasErrorHandlerOptions & { rethrow?: true },
+  ): never;
+  static handle(
+    err: unknown,
+    options?: GasErrorHandlerOptions,
+  ): GasErrorSafePayload;
+  static handle(
+    err: unknown,
     options: GasErrorHandlerOptions = {},
   ): GasErrorSafePayload {
     const {
       logger = console,
       method = 'unknown',
       path = 'unknown',
-      sessionId = null,
+      sessionId,
       rethrow = true,
     } = options;
+
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
 
     const isGasError = err instanceof GasError;
     const statusCode = isGasError ? err.statusCode : 500;
 
     const code: GasErrorCode = isGasError ? err.code : 'INTERNAL_ERROR';
 
-    // Resolve session ID.
-    // Handles cases the required scope for `Session.getActiveUser`
-    // has not been provided.
-    let resolvedSessionId = sessionId;
-    if (!resolvedSessionId) {
+    // Resolve session ID. A string is used as-is; otherwise a resolver (the
+    // given function, or the active user's email) runs lazily. One that throws
+    // (e.g. a declined OAuth scope) logs 'disabled'; an empty value 'unknown'.
+    let resolvedSessionId: string;
+    if (typeof sessionId === 'string' && sessionId) {
+      resolvedSessionId = sessionId;
+    } else {
+      const resolver =
+        typeof sessionId === 'function'
+          ? sessionId
+          : () => Session.getActiveUser().getEmail();
       try {
-        resolvedSessionId = Session.getActiveUser()?.getEmail() || 'unknown';
+        resolvedSessionId = resolver();
       } catch {
         resolvedSessionId = 'disabled';
       }
     }
+    resolvedSessionId ||= 'unknown';
 
     const logPayload: GasErrorLogPayload = {
       method,
       path,
       statusCode,
       code,
-      message: err.message,
+      message,
       sessionId: resolvedSessionId,
     };
 
     if (isGasError && statusCode < 500) {
       logger.warn('Request error', logPayload);
     } else {
-      logger.error('Unexpected error', { ...logPayload, stack: err.stack });
+      logger.error('Unexpected error', { ...logPayload, stack });
     }
 
     const safePayload: GasErrorSafePayload = {
       ok: false,
-      error: isGasError ? err.message : 'Internal server error',
+      error: isGasError ? message : 'Internal server error',
       status: statusCode,
       code,
-      ...(isGasError && err.details ? { details: err.details } : {}),
+      ...(isGasError && err.details !== undefined
+        ? { details: err.details }
+        : {}),
     };
 
     if (rethrow) {
@@ -91,7 +124,7 @@ class GasError extends Error {
 }
 
 class GasValidationError extends GasError {
-  constructor(message = 'Invalid request', details?: string) {
+  constructor(message = 'Invalid request', details?: unknown) {
     super(message, { statusCode: 400, code: 'VALIDATION_ERROR', details });
   }
 }
@@ -125,7 +158,9 @@ class GasRateLimitError extends GasError {
     super(message, {
       statusCode: 429,
       code: 'RATE_LIMITED',
-      details: { retryAfterSeconds },
+      ...(retryAfterSeconds !== undefined
+        ? { details: { retryAfterSeconds } }
+        : {}),
     });
   }
 }
@@ -138,7 +173,7 @@ class GasCaptchaRequiredError extends GasError {
 
 /**
  * V8 engine extension for capturing a stack trace without the constructor
- * frame. Not part of the ECMAScript spec, so absent from lib.es2019 and
+ * frame. Not part of the ECMAScript spec, so absent from lib.es2021 and
  * @types/google-apps-script — declared here since Apps Script runs on V8.
  * Confirmed present at runtime in the GAS sandbox.
  */

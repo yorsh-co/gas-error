@@ -2,6 +2,49 @@
 
 ---
 
+## [1.1.0] - 2026-10-27
+
+### Fixed
+
+- `GasValidationError` accepts any `details`, not just a string
+- `GasRateLimitError` no longer sends an empty `details: {}` when `retryAfterSeconds` is omitted
+- `GasError` derives `code` from `statusCode` when omitted, instead of `INTERNAL_ERROR` for every status
+- `GasError.handle` no longer throws a `TypeError` on `null`/`undefined`, and logs non-`Error` values (strings, numbers, plain objects) with their string form as the message
+- `GasError.handle` accepts `unknown`, so it type-checks with strict catch variables
+- `GasError.handle` returns `never` when it rethrows, via overloads on the `rethrow` option
+- Falsy `details` (`0`, `''`, `false`) are kept in the safe payload
+- `GasErrorSafePayload.ok` is typed as `false`
+- The published `.d.ts` no longer references `GasLogger`; `logger` is typed structurally as `GasErrorLogger` (`console`, a gas-logger instance, or any object with `warn`/`error`)
+- Stop shipping the empty `gas-error.types.js` to the `dist` branch; `.d.ts` files are still published
+
+### Docs
+
+- Document the optional `userinfo.email` scope under Google's granular OAuth consent screen (granted logs the email, declined logs `'disabled'`, blank logs `'unknown'`), and that logged emails reach your logs and any gas-logger sheet sink
+- Fix the `filePushOrder` example paths (the `dist` branch is flat, so no `module/` segment) and note that the paths must match where the files land in the pushed project
+- Make the `doGet` examples return the JSON response (`rethrow: false`) instead of letting the handler's error escape as an Apps Script error page
+- Clarify that a `GasError` with `statusCode >= 500` is logged at `error` with the stack but still sends its own message, code and details; only non-`GasError` values become the generic 500
+- Note the difference between `console` and gas-logger output in Cloud Logging, and that a buffered gas-logger needs `flush()` in a `finally` block or `warn`/`error` in `bypassBufferLevels`
+- Drop the claim that gas-logger is needed to type-check a gas-logger instance, now that `logger` is typed structurally, and describe `GasError.handle` as throwing by default rather than always
+- Correct the library name in the README footer
+- Fix the `ErrorConstructor` JSDoc to reference `lib.es2021`
+
+### Added
+
+- `sessionId` accepts a resolver function, called lazily: a throw logs `'disabled'` and an empty result `'unknown'`
+- Vitest test suite with in-memory Apps Script service mocks
+- Canonical peer type declarations in `peer/gas-error.peer.types.d.ts`, for consuming gas-* libraries to copy into `src/internal/` and type-check `GasError` and its subclasses standalone
+
+### Changed
+
+- ESLint config uses `defineConfig` from `eslint/config` and drops the stale `no-undef` comment
+- `npm run typecheck` and ESLint also cover `test/` through `tsconfig.test.json`; `npm run check` runs the test suite
+- Vendored gas-logger peer declarations replaced with the canonical copy from gas-logger's `peer/`, updated to 1.1.0
+- Releases are published with [`gas-dev-release`](https://github.com/yorsh-co/gas-dev-release) instead of `scripts/release.sh`, which adds preflight checks (clean tree, `v<version>` tag at `HEAD`, build present, release tag free locally and on origin), syncs with `origin/dist` and pushes the branch and tag atomically
+- Tags use a `v` prefix: versions are tagged `vX.Y.Z` and releases `dist/vX.Y.Z`; the earlier plain tags were replaced
+- Bump the transitive dev dependency `brace-expansion` to 5.0.12 to resolve high-severity DoS advisories reported by `npm audit`
+
+---
+
 ## [1.0.0] - 2026-08-03
 
 ### Added
