@@ -15,6 +15,8 @@
 - Falsy `details` (`0`, `''`, `false`) are kept in the safe payload
 - `GasErrorSafePayload.ok` is typed as `false`
 - The published `.d.ts` no longer references `GasLogger`; `logger` is typed structurally as `GasErrorLogger` (`console`, a gas-logger instance, or any object with `warn`/`error`)
+- Stop shipping the empty `gas-error.types.js` to the `dist` branch; the release script now excludes `*.types.js` and keeps the `.d.ts`
+- Harden the release script: fail early on a dirty working tree, a missing or empty `dist/`, or an existing `dist/<version>` tag locally or on origin; sync with `origin/dist` (creating a local `dist` that tracks it, or fast-forwarding, and refusing to discard unpushed commits); exit with a clear message when there is nothing to release; push only the `dist` branch and the release tag instead of `--tags`
 
 ### Added
 
