@@ -17,7 +17,8 @@
 - `GasError` base class carrying a `statusCode`, a `code` (`GasErrorCode`), and optional `details` — marked `isOperational: true` to distinguish expected failures from programming bugs
 - Seven built-in subclasses for common cases: `GasValidationError` (400), `GasUnauthorizedError` (401), `GasForbiddenError` (403), `GasNotFoundError` (404), `GasConflictError` (409), `GasRateLimitError` (429, with a `retryAfterSeconds` detail), `GasCaptchaRequiredError` (400)
 - `GasError.handle(err, options)`: logs `GasError` instances at `warn` (their message/code/details are safe to send to the client as-is); logs anything else at `error` with the full stack, and reports it to the client as a generic 500 with no internal detail
-- Always throws a `JSON.stringify`'d payload — `{ ok: false, error, status, code, details? }` — so it can be caught once at your entry point and returned as the response
+- Accepts any thrown value (`unknown`): an `Error` is used as-is, anything else is logged as an unexpected error with its `String(...)` form as the message
+- Throws a `JSON.stringify`'d payload by default — `{ ok: false, error, status, code, details? }` — so it can be caught once at your entry point and returned as the response
 - Configurable `logger` (defaults to `console`, also accepts a `GasLogger` instance) and `sessionId` (defaults to `Session.getActiveUser()?.getEmail()`, which needs the [`userinfo.email` scope](#oauth-scope) — degrades gracefully without it)
 - Written in TypeScript; ships compiled `.js` plus matching `.d.ts` declarations — no build step required downstream
 - Accepts a `gas-logger` instance for structured logging to the Apps Script Execution Log and, optionally, to a log sheet in Google Sheets
@@ -44,7 +45,7 @@ function doPost(e) {
     try {
       GasError.handle(err, { method: 'POST', path: 'doPost' });
     } catch (handled) {
-      // GasError.handle always throws — `handled.message` is the JSON payload
+      // GasError.handle throws by default — `handled.message` is the JSON payload
       return ContentService.createTextOutput(handled.message).setMimeType(
         ContentService.MimeType.JSON,
       );
@@ -236,7 +237,7 @@ try {
 }
 ```
 
-`GasError.handle` throws by default. Set the `rethrow` option to `false` to set the handler to return the cleaned error body instead of throwing. For a `GasError` with `statusCode < 500`, it logs `'Request error'` at `warn` with `{ method, path, statusCode, code, message, sessionId }`. For anything else — including unexpected bugs — it logs `'Unexpected error'` at `error` with the same payload plus the full `stack`, and the client only ever sees a generic 500 with no internal detail. Either way, the thrown error's `.message` is a JSON string: `{ ok: false, error, status, code, details? }`.
+`GasError.handle` throws by default. Set the `rethrow` option to `false` to set the handler to return the cleaned error body instead of throwing. For a `GasError` with `statusCode < 500`, it logs `'Request error'` at `warn` with `{ method, path, statusCode, code, message, sessionId }`. For anything else — including unexpected bugs — it logs `'Unexpected error'` at `error` with the same payload plus the full `stack`, and the client only ever sees a generic 500 with no internal detail. When it throws, the error's `.message` is a JSON string: `{ ok: false, error, status, code, details? }`.
 
 > [!NOTE]
 > `method` and `path` default to `'unknown'` if not provided. `sessionId` first tries `Session.getActiveUser()?.getEmail()`, falling back to `'unknown'` if the address isn't available, or `'disabled'` if the [`userinfo.email` scope](#oauth-scope) is missing.
