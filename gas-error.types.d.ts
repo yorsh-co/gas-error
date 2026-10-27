@@ -1,20 +1,45 @@
 /**
+ * Sink `GasError.handle` logs through. Only `warn` and `error` are called,
+ * so `console`, a gas-logger instance, or any object exposing those two methods
+ * satisfies it.
+ *
+ * Declared structurally so it resolves on its own — a consumer that uses
+ * gas-error without gas-logger has no gas-logger declarations to reference.
+ */
+interface GasErrorLogger {
+  warn(msg: string, meta?: Record<string, unknown>): void;
+  error(msg: string, meta?: Record<string, unknown>): void;
+}
+/**
  * Request context and behavior flags accepted by `GasError.handle`.
  * Every field is optional — the context fields only enrich the log entry.
  */
 interface GasErrorHandlerOptions {
-  /** If left blank, defaults to console.error(...) */
-  logger?: GasLogger | typeof console;
+  /** Defaults to `console`. */
+  logger?: GasErrorLogger;
   /** HTTP method of the request being handled. Defaults to `'unknown'`. */
   method?: string;
   /** Route or entry point being handled. Defaults to `'unknown'`. */
   path?: string;
   /**
-   * Who the request belongs to. Falls back to the active user's email,
-   * which requires the `https://www.googleapis.com/auth/userinfo.email`
-   * scope — without it the value logs as `'unknown'` or `'disabled'`.
+   * Who the request belongs to, logged as `sessionId`. Resolved as:
+   * - a non-empty string is used as-is;
+   * - a function is called lazily and its result used;
+   * - omitted or empty falls back to the active user's email via
+   *   `Session.getActiveUser().getEmail()`.
+   *
+   * The fallback makes Apps Script list the
+   * `https://www.googleapis.com/auth/userinfo.email` scope in the consent
+   * prompt, detected statically from the library source. With the granular
+   * consent screen (V8 runtime) the user may decline it. The entry logs
+   * `'disabled'` when the lookup throws (scope declined or unavailable) and
+   * `'unknown'` when it returns an empty value. A resolver that throws or
+   * returns an empty value is treated the same way.
+   *
+   * Passing a string or a resolver skips the lookup at runtime, but the scope
+   * is still listed in the prompt.
    */
-  sessionId?: string;
+  sessionId?: string | (() => string);
   /** Set to false to return the safe error payload. Defaults to true. */
   rethrow?: boolean;
 }
@@ -35,7 +60,7 @@ type GasErrorLogPayload = {
  * `message`. Carries no stack or internal detail — safe to send as-is.
  */
 interface GasErrorSafePayload {
-  ok: boolean;
+  ok: false;
   error: string;
   status: number;
   code: GasErrorCode;
@@ -62,7 +87,11 @@ type GasErrorCode =
 interface GasErrorOptions {
   /** Defaults to 500. */
   statusCode?: number;
-  /** Defaults to `'INTERNAL_ERROR'`. */
+  /**
+   * Derived from `statusCode` when omitted: 400 `'VALIDATION_ERROR'`,
+   * 401 `'UNAUTHORIZED'`, 403 `'FORBIDDEN'`, 404 `'NOT_FOUND'`,
+   * 409 `'CONFLICT'`, 429 `'RATE_LIMITED'`, anything else `'INTERNAL_ERROR'`.
+   */
   code?: GasErrorCode;
   /** Arbitrary context attached to the error and echoed to the client. */
   details?: unknown;

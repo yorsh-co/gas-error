@@ -10,60 +10,66 @@ class GasError extends Error {
     super(message);
     this.name = this.constructor.name;
     this.statusCode = options.statusCode || 500;
-    this.code = options.code || 'INTERNAL_ERROR';
+    this.code =
+      options.code ||
+      GAS_ERROR_STATUS_CODES[this.statusCode] ||
+      'INTERNAL_ERROR';
     this.details = options.details;
     this.isOperational = true;
     Error.captureStackTrace(this, this.constructor);
   }
-  /**
-   * Central JSON error handler.
-   *
-   * GasError instances are expected: logged at warn, and their
-   * message/code/details are safe to send to the client as-is.
-   * Anything else is unexpected: logged at error with the full stack,
-   * and reported to the client as a generic 500 with no internal detail.
-   */
   static handle(err, options = {}) {
     const {
       logger = console,
       method = 'unknown',
       path = 'unknown',
-      sessionId = null,
+      sessionId,
       rethrow = true,
     } = options;
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
     const isGasError = err instanceof GasError;
     const statusCode = isGasError ? err.statusCode : 500;
     const code = isGasError ? err.code : 'INTERNAL_ERROR';
-    // Resolve session ID.
-    // Handles cases the required scope for `Session.getActiveUser`
-    // has not been provided.
-    let resolvedSessionId = sessionId;
-    if (!resolvedSessionId) {
+    // Resolve session ID. A string is used as-is; otherwise a resolver (the
+    // given function, or the active user's email) runs lazily. One that throws
+    // (e.g. a declined OAuth scope) logs 'disabled'; an empty value 'unknown'.
+    let resolvedSessionId;
+    if (typeof sessionId === 'string' && sessionId) {
+      resolvedSessionId = sessionId;
+    } else {
+      const resolver =
+        typeof sessionId === 'function'
+          ? sessionId
+          : () => Session.getActiveUser().getEmail();
       try {
-        resolvedSessionId = Session.getActiveUser()?.getEmail() || 'unknown';
+        resolvedSessionId = resolver();
       } catch {
         resolvedSessionId = 'disabled';
       }
     }
+    resolvedSessionId ||= 'unknown';
     const logPayload = {
       method,
       path,
       statusCode,
       code,
-      message: err.message,
+      message,
       sessionId: resolvedSessionId,
     };
     if (isGasError && statusCode < 500) {
       logger.warn('Request error', logPayload);
     } else {
-      logger.error('Unexpected error', { ...logPayload, stack: err.stack });
+      logger.error('Unexpected error', { ...logPayload, stack });
     }
     const safePayload = {
       ok: false,
-      error: isGasError ? err.message : 'Internal server error',
+      error: isGasError ? message : 'Internal server error',
       status: statusCode,
       code,
-      ...(isGasError && err.details ? { details: err.details } : {}),
+      ...(isGasError && err.details !== undefined
+        ? { details: err.details }
+        : {}),
     };
     if (rethrow) {
       throw new Error(JSON.stringify(safePayload));
@@ -102,7 +108,9 @@ class GasRateLimitError extends GasError {
     super(message, {
       statusCode: 429,
       code: 'RATE_LIMITED',
-      details: { retryAfterSeconds },
+      ...(retryAfterSeconds !== undefined
+        ? { details: { retryAfterSeconds } }
+        : {}),
     });
   }
 }
