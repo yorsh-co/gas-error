@@ -71,17 +71,22 @@ class GasError extends Error {
 
     const code: GasErrorCode = isGasError ? err.code : 'INTERNAL_ERROR';
 
-    // Resolve session ID. A resolver that throws (e.g. a missing OAuth
-    // scope) logs 'disabled'; an empty value logs 'unknown'.
-    let resolvedSessionId = '';
-    if (typeof sessionId === 'function') {
+    // Resolve session ID. A string is used as-is; otherwise a resolver (the
+    // given function, or the active user's email) runs lazily. One that throws
+    // (e.g. a declined OAuth scope) logs 'disabled'; an empty value 'unknown'.
+    let resolvedSessionId: string;
+    if (typeof sessionId === 'string' && sessionId) {
+      resolvedSessionId = sessionId;
+    } else {
+      const resolver =
+        typeof sessionId === 'function'
+          ? sessionId
+          : () => Session.getActiveUser().getEmail();
       try {
-        resolvedSessionId = sessionId();
+        resolvedSessionId = resolver();
       } catch {
         resolvedSessionId = 'disabled';
       }
-    } else if (sessionId) {
-      resolvedSessionId = sessionId;
     }
     resolvedSessionId ||= 'unknown';
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadGasError, type GasErrorPayload } from './harness';
+import { DEFAULT_EMAIL, type Mocks } from './mocks';
 
 describe('GasError', () => {
   it('applies defaults', () => {
@@ -375,8 +376,12 @@ describe('GasError.handle', () => {
   });
 
   describe('sessionId', () => {
-    function resolve(sessionId?: string | (() => string)): unknown {
+    function resolve(
+      sessionId?: string | (() => string),
+      configure?: (mocks: Mocks) => void,
+    ) {
       const { classes, mocks } = loadGasError();
+      configure?.(mocks);
       classes.GasError.handle(new classes.GasNotFoundError(), {
         logger: mocks.logger,
         rethrow: false,
@@ -386,35 +391,69 @@ describe('GasError.handle', () => {
         string,
         { sessionId: string },
       ];
-      return meta.sessionId;
+      return { sessionId: meta.sessionId, mocks };
     }
 
-    it("is 'unknown' when omitted, without touching Session", () => {
-      expect(resolve()).toBe('unknown');
+    const throwing = () => {
+      throw new Error('Missing scope');
+    };
+
+    it('looks up the active user email when omitted', () => {
+      const { sessionId, mocks } = resolve();
+
+      expect(sessionId).toBe(DEFAULT_EMAIL);
+      expect(mocks.getEmail).toHaveBeenCalledOnce();
     });
 
-    it('uses a string as-is', () => {
-      expect(resolve('explicit')).toBe('explicit');
+    it("is 'disabled' when the Session lookup throws", () => {
+      const { sessionId } = resolve(undefined, ({ getEmail }) =>
+        getEmail.mockImplementation(throwing),
+      );
+
+      expect(sessionId).toBe('disabled');
     });
 
-    it("is 'unknown' for an empty string", () => {
-      expect(resolve('')).toBe('unknown');
+    it("is 'unknown' when the Session lookup returns a blank email", () => {
+      const { sessionId } = resolve(undefined, ({ getEmail }) =>
+        getEmail.mockReturnValue(''),
+      );
+
+      expect(sessionId).toBe('unknown');
     });
 
-    it('uses the value returned by a resolver', () => {
-      expect(resolve(() => 'user@example.com')).toBe('user@example.com');
+    it('looks up the active user for an empty string', () => {
+      const { sessionId, mocks } = resolve('');
+
+      expect(sessionId).toBe(DEFAULT_EMAIL);
+      expect(mocks.getEmail).toHaveBeenCalledOnce();
     });
 
-    it("is 'unknown' when the resolver returns an empty value", () => {
-      expect(resolve(() => '')).toBe('unknown');
+    it('uses a string as-is without calling Session', () => {
+      const { sessionId, mocks } = resolve('explicit');
+
+      expect(sessionId).toBe('explicit');
+      expect(mocks.Session.getActiveUser).not.toHaveBeenCalled();
+    });
+
+    it('uses the value returned by a resolver without calling Session', () => {
+      const { sessionId, mocks } = resolve(() => 'resolved');
+
+      expect(sessionId).toBe('resolved');
+      expect(mocks.Session.getActiveUser).not.toHaveBeenCalled();
     });
 
     it("is 'disabled' when the resolver throws", () => {
-      expect(
-        resolve(() => {
-          throw new Error('Missing scope');
-        }),
-      ).toBe('disabled');
+      const { sessionId, mocks } = resolve(throwing);
+
+      expect(sessionId).toBe('disabled');
+      expect(mocks.Session.getActiveUser).not.toHaveBeenCalled();
+    });
+
+    it("is 'unknown' when the resolver returns an empty value", () => {
+      const { sessionId, mocks } = resolve(() => '');
+
+      expect(sessionId).toBe('unknown');
+      expect(mocks.Session.getActiveUser).not.toHaveBeenCalled();
     });
   });
 });
