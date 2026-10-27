@@ -6,6 +6,9 @@
 
 ### Fixed
 
+- `GasValidationError` accepts any `details`, not just a string
+- `GasRateLimitError` no longer sends an empty `details: {}` when `retryAfterSeconds` is omitted
+- `GasError` derives `code` from `statusCode` when omitted, instead of `INTERNAL_ERROR` for every status
 - `GasError.handle` no longer throws a `TypeError` on `null`/`undefined`, and logs non-`Error` values (strings, numbers, plain objects) with their string form as the message
 - `GasError.handle` accepts `unknown`, so it type-checks with strict catch variables
 - `GasError.handle` returns `never` when it rethrows, via overloads on the `rethrow` option

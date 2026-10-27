@@ -57,7 +57,11 @@ interface GasErrorOptions {
   /** Defaults to 500. */
   statusCode?: number;
 
-  /** Defaults to `'INTERNAL_ERROR'`. */
+  /**
+   * Derived from `statusCode` when omitted: 400 `'VALIDATION_ERROR'`,
+   * 401 `'UNAUTHORIZED'`, 403 `'FORBIDDEN'`, 404 `'NOT_FOUND'`,
+   * 409 `'CONFLICT'`, 429 `'RATE_LIMITED'`, anything else `'INTERNAL_ERROR'`.
+   */
   code?: GasErrorCode;
 
   /** Arbitrary context attached to the error and echoed to the client. */
@@ -158,7 +162,7 @@ declare class GasError extends Error {
 
 /** 400 / `'VALIDATION_ERROR'`. */
 declare class GasValidationError extends GasError {
-  constructor(message?: string, details?: string);
+  constructor(message?: string, details?: unknown);
 }
 
 /** 404 / `'NOT_FOUND'`. */
@@ -181,7 +185,7 @@ declare class GasConflictError extends GasError {
   constructor(message?: string);
 }
 
-/** 429 / `'RATE_LIMITED'`. Sets `details` to `{ retryAfterSeconds }`. */
+/** 429 / `'RATE_LIMITED'`. Sets `details` to `{ retryAfterSeconds }` only when it is passed. */
 declare class GasRateLimitError extends GasError {
   constructor(message?: string, retryAfterSeconds?: number);
 }
