@@ -29,12 +29,19 @@ const validationObjectDetails = new GasValidationError('x', {
   field: 'email',
 });
 
+const consoleLogger: GasErrorLogger = console;
+
+declare const gasLogger: GasLogger;
+const gasLoggerSink: GasErrorLogger = gasLogger;
+
 const okIsFalse: GasErrorSafePayload['ok'] extends false ? true : false = true;
 
 export {
+  consoleLogger,
   defaultRethrow,
   explicitNoRethrow,
   explicitRethrow,
+  gasLoggerSink,
   payloadIsNotNever,
   rethrows,
   rethrowsExplicitly,

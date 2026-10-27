@@ -36,13 +36,11 @@ type GasErrorCode =
 
 /**
  * Sink `GasError.handle` logs through. Only `warn` and `error` are called,
- * so `console`, a `GasLogger`, or any object exposing those two methods
+ * so `console`, a gas-logger instance, or any object exposing those two methods
  * satisfies it.
  *
- * gas-error's own type is `GasLogger | typeof console`. This peer file
- * declares the structural minimum instead, so it resolves on its own —
- * a consumer that uses gas-error without gas-logger has no `GasLogger`
- * declaration to reference.
+ * Declared structurally so it resolves on its own — a consumer that uses
+ * gas-error without gas-logger has no gas-logger declarations to reference.
  */
 interface GasErrorLogger {
   warn(msg: string, meta?: Record<string, unknown>): void;
@@ -73,7 +71,7 @@ interface GasErrorOptions {
  * Every field is optional — the context fields only enrich the log entry.
  */
 interface GasErrorHandlerOptions {
-  /** If left blank, defaults to console.error(...) */
+  /** Defaults to `console`. */
   logger?: GasErrorLogger;
 
   /** HTTP method of the request being handled. Defaults to `'unknown'`. */

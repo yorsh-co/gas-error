@@ -1,10 +1,23 @@
 /**
+ * Sink `GasError.handle` logs through. Only `warn` and `error` are called,
+ * so `console`, a gas-logger instance, or any object exposing those two methods
+ * satisfies it.
+ *
+ * Declared structurally so it resolves on its own — a consumer that uses
+ * gas-error without gas-logger has no gas-logger declarations to reference.
+ */
+interface GasErrorLogger {
+  warn(msg: string, meta?: Record<string, unknown>): void;
+  error(msg: string, meta?: Record<string, unknown>): void;
+}
+
+/**
  * Request context and behavior flags accepted by `GasError.handle`.
  * Every field is optional — the context fields only enrich the log entry.
  */
 interface GasErrorHandlerOptions {
-  /** If left blank, defaults to console.error(...) */
-  logger?: GasLogger | typeof console;
+  /** Defaults to `console`. */
+  logger?: GasErrorLogger;
 
   /** HTTP method of the request being handled. Defaults to `'unknown'`. */
   method?: string;
