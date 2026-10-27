@@ -14,6 +14,7 @@
 - `GasError.handle` returns `never` when it rethrows, via overloads on the `rethrow` option
 - Falsy `details` (`0`, `''`, `false`) are kept in the safe payload
 - `GasErrorSafePayload.ok` is typed as `false`
+- The published `.d.ts` no longer references `GasLogger`; `logger` is typed structurally as `GasErrorLogger` (`console`, a gas-logger instance, or any object with `warn`/`error`)
 
 ### Added
 
@@ -23,6 +24,7 @@
 
 - ESLint config uses `defineConfig` from `eslint/config` and drops the stale `no-undef` comment
 - `npm run typecheck` and ESLint also cover `test/` through `tsconfig.test.json`; `npm run check` runs the test suite
+- Vendored gas-logger peer declarations updated to 1.1.0
 
 ---
 
