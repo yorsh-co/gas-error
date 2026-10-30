@@ -293,6 +293,19 @@ If `logger` is omitted, `GasError.handle` falls back to `console`.
 > [!TIP]
 > If your `gas-logger` instance is buffered (`flushThreshold`), call `logger.flush()` in a `finally` block, or include `'warn'` and `'error'` in `bypassBufferLevels`, so the handler's entries reach the sheet even when `GasError.handle` rethrows.
 
+## Development
+
+The source code is written in TypeScript.
+
+Release builds are compiled to JavaScript before publishing so the distributed library remains compatible with Google Apps Script.
+
+### Apps Script tests
+
+The Vitest suite runs against in-memory fakes of `Session` and `console`. `gas-test/gas-error.ts` checks the platform behaviour they stand in for in a real Apps Script execution: stack capture, the `Session.getActiveUser()` fallback without the email scope, and `handle()` logging through a real [GasLogger](https://github.com/yorsh-co/gas-logger) sheet sink. They are built and run with [gas-dev-config](https://github.com/yorsh-co/gas-dev-config#apps-script-tests)'s `gas-test`; see its README for the one-off setup.
+
+- `npm run test:gas:build` writes a single script, with gas-logger bundled in; paste it into the Apps Script editor and run `runGasTests`.
+- `npm run test:gas` pushes it to a dedicated test project with clasp and prints the results. It needs `clasp login`, `GAS_TEST_SCRIPT_ID` and `GAS_TEST_SPREADSHEET_ID`; the project's contents are replaced, and the test sheets are deleted from the spreadsheet after the run.
+
 ## License
 
 MIT

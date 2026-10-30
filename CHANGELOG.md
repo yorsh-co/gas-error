@@ -4,10 +4,21 @@
 
 ## [Unreleased]
 
+### Added
+
+- Apps Script tests in `gas-test/`, run with gas-dev-config's `gas-test` (`npm run test:gas:build`, `npm run test:gas`)
+- The release `package.json` carries `gasLibrary` load-order metadata for gas-dev-bundle, with gas-logger as a peer
+
 ### Changed
 
 - Lint, TypeScript and Prettier configuration and the test loader come from `gas-dev-config`
 - Dependabot groups development dependencies into one weekly pull request
+- Load order is read from `gasDevConfig.loadOrder` instead of being duplicated in the test harness
+- Bumped gas-dev-config to ^1.4.1 and gas-dev-release to ^1.1.0
+
+### Fixed
+
+- The release no longer contains ES2021 syntax (`||=`), which Apps Script rejects on push, so projects including gas-error 1.1.0 could not be pushed; builds now target ES2020 through gas-dev-config 1.4.1
 
 ---
 

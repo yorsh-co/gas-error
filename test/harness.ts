@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url';
-import { createGasLoader } from 'gas-dev-config/test';
+import { createGasLoader, loadOrderFiles } from 'gas-dev-config/test';
 import { createMocks, type Mocks } from './mocks';
 
 type Meta = Record<string, unknown>;
@@ -60,15 +60,10 @@ export interface GasErrorClasses {
   GasCaptchaRequiredError: GasErrorSubclass;
 }
 
-/** Source files in load order; later files depend on earlier ones. */
-const SOURCE_FILES = [
-  'gas-error.types.ts',
-  'gas-error.constants.ts',
-  'gas-error.ts',
-];
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 const load = createGasLoader<GasErrorClasses>({
-  files: SOURCE_FILES.map((file) => `src/${file}`),
+  files: loadOrderFiles(ROOT),
   exports: [
     'GasError',
     'GasValidationError',
@@ -79,7 +74,7 @@ const load = createGasLoader<GasErrorClasses>({
     'GasRateLimitError',
     'GasCaptchaRequiredError',
   ],
-  root: fileURLToPath(new URL('..', import.meta.url)),
+  root: ROOT,
 });
 
 /**
