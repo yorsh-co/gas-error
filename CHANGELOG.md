@@ -18,6 +18,7 @@
 
 ### Fixed
 
+- README: executions through the Apps Script API (e.g. `clasp run`) can resolve the user's email even when `oauthScopes` omits `userinfo.email`
 - The release no longer contains ES2021 syntax (`||=`), which Apps Script rejects on push, so projects including gas-error 1.1.0 could not be pushed; builds now target ES2020 through gas-dev-config 1.4.1
 
 ---

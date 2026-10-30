@@ -73,7 +73,7 @@ With Google's [granular OAuth consent screen](https://developers.google.com/apps
 
 Granular consent applies to new grants only; consents already granted are unaffected.
 
-If your `appsscript.json` pins `oauthScopes`, add the scope to offer it. Leave it out to never request it; the lookup then fails and logs `'disabled'`:
+If your `appsscript.json` pins `oauthScopes`, add the scope to offer it. Leave it out to never request it; the lookup then fails and logs `'disabled'`. Executions through the Apps Script API (`scripts.run`, e.g. `clasp run`) are the exception: they run with the caller's OAuth token, and when that token carries `userinfo.email` (as clasp's login does) the email is returned even though the manifest omits the scope:
 
 ```json
 {
@@ -301,7 +301,7 @@ Release builds are compiled to JavaScript before publishing so the distributed l
 
 ### Apps Script tests
 
-The Vitest suite runs against in-memory fakes of `Session` and `console`. `gas-test/gas-error.ts` checks the platform behaviour they stand in for in a real Apps Script execution: stack capture, the `Session.getActiveUser()` fallback without the email scope, and `handle()` logging through a real [GasLogger](https://github.com/yorsh-co/gas-logger) sheet sink. They are built and run with [gas-dev-config](https://github.com/yorsh-co/gas-dev-config#apps-script-tests)'s `gas-test`; see its README for the one-off setup.
+The Vitest suite runs against in-memory fakes of `Session` and `console`. `gas-test/gas-error.ts` checks the platform behaviour they stand in for in a real Apps Script execution: stack capture, the `Session.getActiveUser()` fallback, and `handle()` logging through a real [GasLogger](https://github.com/yorsh-co/gas-logger) sheet sink. They are built and run with [gas-dev-config](https://github.com/yorsh-co/gas-dev-config#apps-script-tests)'s `gas-test`; see its README for the one-off setup.
 
 - `npm run test:gas:build` writes a single script, with gas-logger bundled in; paste it into the Apps Script editor and run `runGasTests`.
 - `npm run test:gas` pushes it to a dedicated test project with clasp and prints the results. It needs `clasp login`, `GAS_TEST_SCRIPT_ID` and `GAS_TEST_SPREADSHEET_ID`; the project's contents are replaced, and the test sheets are deleted from the spreadsheet after the run.
