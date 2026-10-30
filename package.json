@@ -1,11 +1,20 @@
 {
   "name": "gas-error",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A centralized JSON error handler for Google Apps Script with Error classes for expected failures.",
   "license": "MIT",
   "author": "Joshua Porter",
   "repository": {
     "type": "git",
     "url": "https://github.com/yorsh-co/gas-error.git"
+  },
+  "gasLibrary": {
+    "loadOrder": [
+      "gas-error.constants.js",
+      "gas-error.js"
+    ],
+    "peers": {
+      "gas-logger": "^1.1.0"
+    }
   }
 }

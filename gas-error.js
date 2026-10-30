@@ -48,7 +48,7 @@ class GasError extends Error {
         resolvedSessionId = 'disabled';
       }
     }
-    resolvedSessionId ||= 'unknown';
+    resolvedSessionId || (resolvedSessionId = 'unknown');
     const logPayload = {
       method,
       path,
