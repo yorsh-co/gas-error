@@ -2,6 +2,14 @@
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- The vendored `GasLogger` declaration is the canonical copy from gas-logger's `peer/`, at 1.2.0 (adds the `lockService` option)
+
+---
+
 ## [1.2.0] - 2026-10-30
 
 ### Added
