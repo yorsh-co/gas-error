@@ -1,6 +1,6 @@
 {
   "name": "gas-error",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "A centralized JSON error handler for Google Apps Script with Error classes for expected failures.",
   "repository": {
@@ -17,21 +17,33 @@
     "node": ">=20.0.0"
   },
   "type": "module",
-  "prettier": {
-    "singleQuote": true
+  "prettier": "gas-dev-config/prettier",
+  "gasDevConfig": {
+    "loadOrder": [
+      "gas-error.types.ts",
+      "gas-error.constants.ts",
+      "gas-error.ts"
+    ],
+    "peers": {
+      "gas-logger": "^1.1.0"
+    },
+    "gasTest": {
+      "scopes": [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/script.storage"
+      ]
+    }
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@google/clasp": "^3.4.1",
     "@types/google-apps-script": "^2.0.11",
     "@types/node": "^22.20.5",
     "eslint": "^10.7.0",
-    "eslint-config-prettier": "^10.1.8",
-    "gas-dev-release": "github:yorsh-co/gas-dev-release#semver:^1.0.0",
-    "globals": "^17.7.0",
+    "gas-dev-config": "github:yorsh-co/gas-dev-config#semver:^1.4.1",
+    "gas-dev-release": "github:yorsh-co/gas-dev-release#semver:^1.1.0",
     "prettier": "^3.9.6",
     "rimraf": "^6.1.3",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.65.0",
     "vitest": "^5.0.3"
   },
   "scripts": {
@@ -41,14 +53,16 @@
     "build:format": "npm run check && npm run build && npm run format:dist",
     "build:watch": "tsc --watch",
     "build:release": "npm run build:format && npm run release",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json && echo '✓ TypeScript passed'",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json && tsc -p gas-test/tsconfig.json --noEmit && echo '✓ TypeScript passed'",
     "lint": "eslint . && echo '✓ Lint passed'",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
     "format:dist": "prettier ./dist --write --ignore-path .prettierignore",
     "format:check": "prettier . --check",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && gas-dev-config check",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:gas:build": "gas-dev-config gas-test build",
+    "test:gas": "gas-dev-config gas-test run"
   }
 }
