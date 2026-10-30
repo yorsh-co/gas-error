@@ -2,6 +2,15 @@
 
 ---
 
+## [1.2.1] - 2026-10-30
+
+### Changed
+
+- The vendored `GasLogger` declaration is the canonical copy from gas-logger's `peer/`, at 1.2.0 (adds the `lockService` option)
+- README: install with gas-dev-bundle when using several gas-\* libraries, alongside git subtree
+
+---
+
 ## [1.2.0] - 2026-10-30
 
 ### Added
