@@ -102,6 +102,8 @@ GasError.handle(err, {
 > [!TIP]
 > It is recommended to use `gas-error` together with [Google's `clasp` CLI](https://github.com/google/clasp) for local Apps Script development and git-based workflows. See [Setup instructions with `clasp`](#setup-instructions-with-clasp) for more information.
 
+<a id="add-the-library"></a>
+
 #### 1. Add the library to your Apps Script project
 
 ##### Several gas-\* libraries: gas-dev-bundle
@@ -208,7 +210,7 @@ clasp create --type standalone
 
 #### 5. Import `gas-error`
 
-To install several gas-\* libraries together, use the [gas-dev-bundle method](#1-add-the-library-to-your-apps-script-project) from the Quick Start; otherwise, add this library with git subtree:
+To install several gas-\* libraries together, use the [gas-dev-bundle method](#add-the-library) from the Quick Start; otherwise, add this library with git subtree:
 
 ```bash
 git subtree add \
@@ -238,8 +240,8 @@ src/lib/gas-error/
 > ```json
 > {
 >   "filePushOrder": [
->     "dist/lib/gas-error/gas-error.constants.js",
->     "dist/lib/gas-error/gas-error.js"
+>     "src/lib/gas-error/gas-error.constants.js",
+>     "src/lib/gas-error/gas-error.js"
 >   ]
 > }
 > ```
