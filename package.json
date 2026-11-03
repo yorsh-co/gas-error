@@ -1,6 +1,6 @@
 {
   "name": "gas-error",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "private": true,
   "description": "A centralized JSON error handler for Google Apps Script with Error classes for expected failures.",
   "repository": {
@@ -25,7 +25,7 @@
       "gas-error.ts"
     ],
     "peers": {
-      "gas-logger": "^1.1.0"
+      "gas-logger": "^1.1.0 || ^2.0.0"
     },
     "gasTest": {
       "scopes": [
