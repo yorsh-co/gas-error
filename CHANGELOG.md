@@ -2,6 +2,17 @@
 
 ---
 
+## [1.2.2] - 2026-11-03
+
+### Changed
+
+- The vendored `GasLogger` declaration is the canonical copy from gas-logger's `peer/`, at 2.0.1 (`sheetConfig.spreadsheet` is required and accepts a `Spreadsheet` or a function returning one; `spreadsheetUrl`, `spreadsheetId` and `useActiveSpreadsheet` are removed)
+- The gas-logger peer range is `^1.1.0 || ^2.0.0`, so gas-dev-bundle accepts gas-logger 2.x without a peer warning, and `gas-test` bundles gas-logger 2.x
+- README: the gas-dev-bundle example lists gas-logger `^2.0.1`
+- README: the `filePushOrder` example uses the `src/lib/` subtree path its text describes, and cross-references use anchors that survive renumbering the steps
+
+---
+
 ## [1.2.1] - 2026-10-30
 
 ### Changed
