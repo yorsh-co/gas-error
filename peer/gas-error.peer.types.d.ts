@@ -17,7 +17,7 @@
  * `gas-dev-config peers sync`, which writes it to `src/internal/`.
  *
  * @see https://github.com/yorsh-co/gas-error
- * @version 1.2.4
+ * @version 1.2.5
  */
 
 /**
