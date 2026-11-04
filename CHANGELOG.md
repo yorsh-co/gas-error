@@ -2,6 +2,15 @@
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- The peer declarations' `@version` header now matches the package version (1.2.3)
+- The vendored gas-logger peer declarations are re-copied from gas-logger 2.0.2
+
+---
+
 ## [1.2.3] - 2026-11-04
 
 ### Changed
