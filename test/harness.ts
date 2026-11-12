@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url';
-import { createGasLoader, loadOrderFiles } from 'gas-dev-config/test';
+import { createGasLoader, loadOrderFiles } from 'gasdev/test';
 import { createMocks, type Mocks } from './mocks';
 
 type Meta = Record<string, unknown>;
