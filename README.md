@@ -106,30 +106,32 @@ GasError.handle(err, {
 
 #### 1. Add the library to your Apps Script project
 
-##### Several gas-\* libraries: gas-dev-bundle
+##### Several gas-\* libraries: gasdev bundle
 
-[gas-dev-bundle](https://github.com/yorsh-co/gas-dev-bundle) resolves version ranges against the libraries' release tags and writes them into one script, in dependency order.
+[gasdev bundle](https://github.com/yorsh-co/gasdev#bundle) resolves version ranges against the libraries' release tags and writes them into one script, in dependency order.
 
 ```bash
-npm install -D github:yorsh-co/gas-dev-bundle#semver:^2.0.0
+npm install -D github:yorsh-co/gasdev#semver:^3.0.0
 ```
 
 List the libraries in your `package.json`:
 
 ```json
 {
-  "gasDevBundle": {
-    "outFile": "src/lib/gas-libraries.js",
-    "libraries": {
-      "gas-error": "^1.2.0",
-      "gas-logger": "^2.0.1"
+  "gasdev": {
+    "bundle": {
+      "outFile": "src/lib/gas-libraries.js",
+      "libraries": {
+        "gas-error": "^1.2.0",
+        "gas-logger": "^2.0.1"
+      }
     }
   }
 }
 ```
 
 ```bash
-npx gas-dev-bundle
+npx gasdev bundle
 ```
 
 - Commit the generated file. Its header records each library's version and commit SHA.
@@ -137,7 +139,7 @@ npx gas-dev-bundle
 - Requires `gas-error` >= 1.2.0, the first release that carries the load-order metadata.
 - Listing `gas-logger` bundles it ahead of `gas-error`; list it only if you use it as the handler's logger, as `gas-error` never references it itself.
 
-See the [gas-dev-bundle README](https://github.com/yorsh-co/gas-dev-bundle) for configuration details.
+See the [gasdev bundle documentation](https://github.com/yorsh-co/gasdev#bundle) for configuration details.
 
 ##### This library only: git subtree
 
@@ -210,7 +212,7 @@ clasp create --type standalone
 
 #### 5. Import `gas-error`
 
-To install several gas-\* libraries together, use the [gas-dev-bundle method](#add-the-library) from the Quick Start; otherwise, add this library with git subtree:
+To install several gas-\* libraries together, use the [gasdev bundle method](#add-the-library) from the Quick Start; otherwise, add this library with git subtree:
 
 ```bash
 git subtree add \
@@ -250,7 +252,7 @@ src/lib/gas-error/
 >
 > Alternatively, you can manually move these files to the top of the file list in the Apps Script editor.
 >
-> With gas-dev-bundle, the single entry is the bundle file, e.g. `src/lib/gas-libraries.js` (adjusted for `rootDir`).
+> With gasdev bundle, the single entry is the bundle file, e.g. `src/lib/gas-libraries.js` (adjusted for `rootDir`).
 
 #### 7. Push local files to Apps Script
 
@@ -342,7 +344,7 @@ Release builds are compiled to JavaScript before publishing so the distributed l
 
 ### Apps Script tests
 
-The Vitest suite runs against in-memory fakes of `Session` and `console`. `gas-test/gas-error.ts` checks the platform behaviour they stand in for in a real Apps Script execution: stack capture, the `Session.getActiveUser()` fallback, and `handle()` logging through a real [GasLogger](https://github.com/yorsh-co/gas-logger) sheet sink. They are built and run with [gas-dev-config](https://github.com/yorsh-co/gas-dev-config#apps-script-tests)'s `gas-test`; see its README for the one-off setup.
+The Vitest suite runs against in-memory fakes of `Session` and `console`. `gas-test/gas-error.ts` checks the platform behaviour they stand in for in a real Apps Script execution: stack capture, the `Session.getActiveUser()` fallback, and `handle()` logging through a real [GasLogger](https://github.com/yorsh-co/gas-logger) sheet sink. They are built and run with [gasdev](https://github.com/yorsh-co/gasdev#apps-script-tests)'s `gas-test`; see its README for the one-off setup.
 
 - `npm run test:gas:build` writes a single script, with gas-logger bundled in; paste it into the Apps Script editor and run `runGasTests`.
 - `npm run test:gas` pushes it to a dedicated test project with clasp and prints the results. It needs `clasp login`, `GAS_TEST_SCRIPT_ID` and `GAS_TEST_SPREADSHEET_ID`; the project's contents are replaced, and the test sheets are deleted from the spreadsheet after the run.
